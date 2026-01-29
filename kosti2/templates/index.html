@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Игра в кости</title>
+    <meta charset="utf-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Arial Black', Arial, sans-serif; 
+            background: 
+                linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)),
+                url('/static/background.jpg') center/cover fixed no-repeat;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        body.game-mode { 
+            background: 
+                linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)),
+                url('/static/game-bg.jpg') center/cover fixed no-repeat; 
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        h1 { 
+            font-size: 4em; text-align: center; margin: 40px 0 80px; 
+            color: #ffffff !important; 
+            text-shadow: 0 0 10px #ffffff, 0 0 20px #ffd700, 2px 2px 4px rgba(0,0,0,0.9);
+            letter-spacing: 8px; font-weight: bold;
+        }
+
+        .menu { text-align: center; margin: 120px 0; }
+        .mode-grid { display: flex; justify-content: center; gap: 50px; flex-wrap: wrap; }
+        .menu button {
+            background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)); 
+            backdrop-filter: blur(20px); border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 25px; padding: 25px 50px; font-size: 1.8em; font-weight: bold;
+            color: #ffffff; cursor: pointer; transition: all 0.4s;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6), 0 0 30px rgba(255,255,255,0.2);
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.8); min-width: 250px;
+        }
+        .menu button:hover {
+            transform: translateY(-10px); border-color: #ffd700; 
+            box-shadow: 0 25px 60px rgba(255,215,0,0.4), 0 0 50px rgba(255,215,0,0.5);
+        }
+
+        .game { display: none; }
+        .players-container {
+            display: flex; justify-content: center; align-items: center; gap: 100px; 
+            margin: 60px 0 40px; flex-wrap: wrap;
+        }
+        .player {
+            background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); 
+            backdrop-filter: blur(20px); border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 30px; padding: 50px 30px; min-width: 300px; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7); transition: all 0.4s;
+        }
+        .player:hover { transform: translateY(-8px); box-shadow: 0 30px 80px rgba(0,0,0,0.8); }
+        .player h2 { font-size: 2.5em; margin-bottom: 30px; color: #ffd700; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); }
+        .dice { font-size: 11em; margin: 30px 0; filter: drop-shadow(0 0 25px rgba(255,255,255,0.8)); }
+        .roll-btn {
+            background: linear-gradient(145deg, #00d4aa, #00b894); border: none; border-radius: 20px;
+            padding: 20px 50px; font-size: 1.5em; font-weight: bold; color: white;
+            cursor: pointer; box-shadow: 0 10px 30px rgba(245, 212, 0, 0.788);
+            transition: all 0.3s; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+        .roll-btn:hover:not(:disabled) { transform: translateY(-4px); box-shadow: 0 15px 40px rgba(0,212,170,0.7); }
+        .roll-btn:disabled { background: #666; cursor: not-allowed; opacity: 0.6; }
+
+        /* НАДПИСЬ НИЖЕ ИГРОВОГО ПОЛЯ */
+        #winner { 
+            text-align: center; 
+            margin: 30px 0 50px 200px;
+            font-size: 3.5em; font-weight: bold; padding: 30px 50px;
+            background: rgba(255,107,107,0.25); border: 4px solid rgba(255,107,107,0.7); 
+            border-radius: 30px; box-shadow: 0 25px 70px rgba(255,107,107,0.4);
+            text-shadow: 3px 3px 8px rgba(0,0,0,0.9); color: #fff; display: inline-block;
+        }
+
+        #game-buttons { text-align: center; margin: 60px 0 60px 0; }
+        .back-btn, .new-round-btn {
+            background: linear-gradient(145deg, #a8edea, #fed6e3); border: none; border-radius: 20px;
+            padding: 18px 40px; font-size: 1.3em; font-weight: bold; color: #333; 
+            margin: 0 15px; cursor: pointer; box-shadow: 0 10px 30px rgba(168,230,207,0.4);
+            transition: all 0.3s;
+        }
+        .back-btn:hover, .new-round-btn:hover { transform: translateY(-4px); box-shadow: 0 15px 40px rgba(168,230,207,0.6); }
+        .hidden { display: none !important; }
+
+        @keyframes diceRoll { 0%, 100% { transform: rotateY(0deg); } 25% { transform: rotateY(90deg); } 50% { transform: rotateY(180deg); } 75% { transform: rotateY(270deg); } }
+        .dice.animate { animation: diceRoll 0.8s ease-in-out; }
+
+        @media (max-width: 768px) { 
+            .players-container { flex-direction: column; gap: 50px; margin: 40px 0 30px; }
+            .player { min-width: 280px; } h1 { font-size: 2.8em; } 
+            .mode-grid { flex-direction: column; gap: 30px; }
+            #winner { font-size: 2.5em; padding: 20px 30px; margin: 20px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Игра в кости 🎲</h1>
+        
+        <div id="menu" class="menu">
+            <button id="lobby-btn" style="padding: 25px 50px; font-size: 1.8em; background: linear-gradient(45deg, #ff6b6b, #ffd93d);">🎲 Лобби онлайн</button>
+
+            <div id="lobby-modal" class="modal">
+    <div class="modal-content">
+        <h2>🎲 Лобби</h2>
+        <button onclick="createPublic()">🟢 Создать открытое</button>
+        <button onclick="createPrivate()">🔒 Создать приватное</button>
+        <h3>Открытые лобби:</h3>
+        <div id="lobby-list"></div>
+        <input id="join-code" placeholder="ID лобби или пароль">
+        <button onclick="joinLobby()">Присоединиться</button>
+        <button onclick="closeModal()">Закрыть</button>
+    </div>
+</div>
+
+            <div class="mode-grid">
+                <button onclick="startGame('friend')">👥 Игра с другом</button>
+                <button onclick="startGame('bot')">🤖 Игра с ботом</button>
+            </div>
+        </div>
+
+        <div id="game" class="game">
+            <div class="players-container">
+                <div class="player" id="player1">
+                    <h2>Игрок 1</h2>
+                    <div class="dice" id="dice1">⚀</div>
+                    <button id="roll1" class="roll-btn" onclick="rollDice(1)">Бросить кость</button>
+                </div>
+                <div class="player" id="player2">
+                    <h2 id="player2-title">Игрок 2</h2>
+                    <div class="dice" id="dice2">⚀</div>
+                    <button id="roll2" class="roll-btn hidden" onclick="rollDice(2)">Бросить кость</button>
+                </div>
+            </div>
+            
+            <!-- НАДПИСЬ НИЖЕ -->
+            <h2 id="winner" class="hidden"></h2>
+            <div id="game-buttons" class="hidden">
+                <button class="new-round-btn" onclick="newRound()">🔄 Новый раунд</button>
+                <button class="back-btn" onclick="backToMenu()">🏠 В меню</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameMode = ''; let player1Dice = 0; let player2Dice = 0;
+
+        function startGame(mode) {
+            gameMode = mode; document.getElementById('menu').style.display = 'none';
+            document.getElementById('game').style.display = 'block'; document.body.classList.add('game-mode');
+            document.getElementById('player2-title').textContent = mode === 'bot' ? '🤖 Бот' : '👥 Игрок 2';
+            resetGame();
+            
+            if (gameMode === 'friend') {
+                document.getElementById('roll1').classList.remove('hidden');
+                document.getElementById('roll2').classList.remove('hidden');
+                document.getElementById('roll1').disabled = false;
+                document.getElementById('roll2').disabled = false;
+            } else {
+                document.getElementById('roll1').classList.remove('hidden');
+                document.getElementById('roll1').disabled = false;
+                document.getElementById('roll2').classList.add('hidden');
+            }
+        }
+
+        async function rollDice(player) {
+            const diceElement = document.getElementById(`dice${player}`);
+            const rollBtn = document.getElementById(`roll${player}`);
+            rollBtn.disabled = true; diceElement.classList.add('animate');
+            
+            const response = await fetch('/roll'); const data = await response.json();
+            
+            if (player === 1) { 
+                player1Dice = data.dice; 
+                document.getElementById('dice1').textContent = getDiceEmoji(player1Dice); 
+            } else { 
+                player2Dice = data.dice; 
+                document.getElementById('dice2').textContent = getDiceEmoji(player2Dice); 
+            }
+            
+            setTimeout(() => { 
+                diceElement.classList.remove('animate'); 
+                
+                // БОТ кидает автоматически
+                if (gameMode === 'bot' && player === 1 && player1Dice > 0 && player2Dice === 0) {
+                    setTimeout(() => botRoll(), 800);
+                }
+                
+                if (player1Dice > 0 && player2Dice > 0) {
+                    setTimeout(showWinner, 500);
+                }
+            }, 900);
+        }
+
+        async function botRoll() {
+            const diceElement = document.getElementById('dice2');
+            diceElement.classList.add('animate');
+            
+            const response = await fetch('/roll');
+            const data = await response.json();
+            player2Dice = data.dice;
+            document.getElementById('dice2').textContent = getDiceEmoji(player2Dice);
+            
+            setTimeout(() => { 
+                diceElement.classList.remove('animate'); 
+                showWinner(); 
+            }, 900);
+        }
+
+        function showWinner() {
+            let result = player1Dice > player2Dice ? 'Игрок 1 победил! 🎉' :
+                        player2Dice > player1Dice ? (gameMode === 'bot' ? 'Бот победил! 🤖' : 'Игрок 2 победил! 🎉') :
+                        'Ничья! 🤝';
+            document.getElementById('winner').textContent = result;
+            document.getElementById('winner').classList.remove('hidden');
+            document.getElementById('game-buttons').classList.remove('hidden');
+        }
+
+        function newRound() { 
+            resetGame(); 
+            document.getElementById('winner').classList.add('hidden');
+            document.getElementById('game-buttons').classList.add('hidden');
+            
+            if (gameMode === 'friend') {
+                document.getElementById('roll1').disabled = false;
+                document.getElementById('roll2').disabled = false;
+            } else {
+                document.getElementById('roll1').disabled = false;
+                document.getElementById('roll2').classList.add('hidden');
+            }
+        }
+        
+        function resetGame() { 
+            player1Dice = 0; player2Dice = 0; 
+            document.getElementById('dice1').textContent = '⚀'; 
+            document.getElementById('dice2').textContent = '⚀'; 
+        }
+        
+        function backToMenu() { 
+            document.getElementById('menu').style.display = 'block'; 
+            document.getElementById('game').style.display = 'none'; 
+            document.body.classList.remove('game-mode'); 
+            document.getElementById('winner').classList.add('hidden'); 
+            document.getElementById('game-buttons').classList.add('hidden'); 
+            gameMode = ''; 
+            resetGame(); 
+        }
+        
+        function getDiceEmoji(num) { 
+            const emojis = ['⚀','⚁','⚂','⚃','⚄','⚅']; 
+            return emojis[num-1]; 
+        }
+        const modal = document.getElementById('lobby-modal');
+document.getElementById('lobby-btn').onclick = () => { modal.style.display = 'block'; loadLobbies(); };
+
+function closeModal() { modal.style.display = 'none'; }
+
+async function loadLobbies() {
+    try {
+        const resp = await fetch('/api/lobbies');
+        const data = await resp.json();
+        document.getElementById('lobby-list').innerHTML = data.map(l => 
+            `<button onclick="joinById('${l.id}')">${l.id} (${l.players} игроков)</button>`
+        ).join('<br>');
+    } catch(e) { console.error(e); }
+}
+
+async function createPublic() {
+    try {
+        const resp = await fetch('/api/lobbies', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: 'public'})
+        });
+        const data = await resp.json();
+        alert(`Создано! ID: ${data.id}\nПоделись с другом`);
+        closeModal();
+    } catch(e) { alert('Ошибка'); }
+}
+
+async function createPrivate() {
+    createPublic();  // Генерит пароль в ответе
+}
+
+async function joinLobby() {
+    const code = document.getElementById('join-code').value;
+    joinById(code);
+}
+
+async function joinById(id) {
+    try {
+        // TODO: POST /api/lobbies/{id}/join
+        alert(`Присоединился к ${id}! Переход в игру...`);
+        window.location.href = `/game.html?lobby=${id}`;
+        closeModal();
+    } catch(e) { alert('Ошибка'); }
+}
+
+    </script>
+</body>
+</html>
