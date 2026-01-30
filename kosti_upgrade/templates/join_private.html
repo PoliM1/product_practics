@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Вход в лобби - Игра в Кости{% endblock %}
+
+{% block content %}
+<div class="join-private-lobby">
+    <div class="join-form-container">
+        <h1>🔒 Закрытое Лобби</h1>
+        <p>Для входа в это лобби требуется пароль</p>
+        
+        {% if error %}
+        <div class="error-message">
+            ❌ {{ error }}
+        </div>
+        {% endif %}
+        
+        <form method="POST" class="password-form">
+            <div class="form-group">
+                <label for="password">Введите пароль:</label>
+                <input type="text" 
+                       id="password" 
+                       name="password" 
+                       class="form-input password-input" 
+                       placeholder="XXXXXX"
+                       maxlength="6"
+                       required
+                       autofocus>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Войти в лобби</button>
+                <a href="{{ url_for('lobby_page') }}" class="btn btn-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Автоматическое преобразование в верхний регистр
+document.getElementById('password').addEventListener('input', function(e) {
+    e.target.value = e.target.value.toUpperCase();
+});
+</script>
+{% endblock %}

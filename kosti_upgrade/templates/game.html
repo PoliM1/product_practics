@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Игра - Игра в Кости{% endblock %}
+
+{% block content %}
+<div class="game-page">
+    <h1>🎲 Игра началась! 🎲</h1>
+    
+    <div class="game-container">
+        <div class="game-info">
+            <div class="game-settings-display">
+                <span>🎲 Кости: {{ lobby.game_settings.dice_count }}</span>
+                <span>🏆 До победы: {{ lobby.game_settings.win_score }}</span>
+            </div>
+        </div>
+        
+        <div class="players-scores">
+            {% for player in lobby.players %}
+            <div class="player-score" data-player-id="{{ player }}">
+                <span class="player-name">
+                    {{ 'Вы' if player == user_id else 'Игрок ' + loop.index|string }}
+                </span>
+                <span class="score">0</span>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="game-area">
+            <div class="dice-container" id="diceContainer">
+                <!-- Кости будут добавляться динамически -->
+            </div>
+            
+            <div class="game-controls">
+                <button id="rollDiceBtn" class="btn btn-primary btn-large">
+                    🎲 Бросить кости
+                </button>
+            </div>
+        </div>
+        
+        <div class="game-log">
+            <h3>История ходов</h3>
+            <div id="gameLog" class="log-container">
+                <p class="text-muted">Игра началась!</p>
+            </div>
+        </div>
+    </div>
+    
+    <button id="endGameBtn" class="btn btn-danger">Завершить игру</button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const lobbyId = '{{ lobby_id }}';
+const userId = '{{ user_id }}';
+const diceCount = {{ lobby.game_settings.dice_count }};
+const socket = io();
+
+// Подключение к комнате
+socket.emit('join', { lobby_id: lobbyId });
+
+// Инициализация костей
+function initDice() {
+    const container = document.getElementById('diceContainer');
+    container.innerHTML = '';
+    for (let i = 0; i < diceCount; i++) {
+        const die = document.createElement('div');
+        die.className = 'die';
+        die.textContent = '?';
+        container.appendChild(die);
+    }
+}
+
+// Бросок костей
+document.getElementById('rollDiceBtn').addEventListener('click', () => {
+    rollDice();
+});
+
+function rollDice() {
+    const dice = document.querySelectorAll('.die');
+    const results = [];
+    
+    dice.forEach((die, index) => {
+        setTimeout(() => {
+            const value = Math.floor(Math.random() * 6) + 1;
+            die.textContent = value;
+            die.className = 'die rolling';
+            results.push(value);
+            
+            setTimeout(() => {
+                die.classList.remove('rolling');
+            }, 500);
+        }, index * 100);
+    });
+    
+    setTimeout(() => {
+        const sum = results.reduce((a, b) => a + b, 0);
+        addLogEntry(`Вы выбросили: ${results.join(', ')} = ${sum}`);
+    }, diceCount * 100 + 500);
+}
+
+function addLogEntry(message) {
+    const log = document.getElementById('gameLog');
+    const entry = document.createElement('p');
+    entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+// Завершение игры
+document.getElementById('endGameBtn').addEventListener('click', () => {
+    if (confirm('Вы уверены, что хотите завершить игру?')) {
+        window.location.href = '{{ url_for("lobby_page") }}';
+    }
+});
+
+// Инициализация
+initDice();
+</script>
+{% endblock %}

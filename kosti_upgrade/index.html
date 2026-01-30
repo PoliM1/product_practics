@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Добро пожаловать - Игра в Кости{% endblock %}
+
+{% block content %}
+<div class="main-menu">
+    <h1>🎲 Игра в Кости 🎲</h1>
+    <div class="menu-buttons">
+        <a href="{{ url_for('lobby_page') }}" class="btn btn-primary btn-large">Играть</a>
+        <button class="btn btn-secondary btn-large">Правила</button>
+        <button class="btn btn-secondary btn-large">Настройки</button>
+    </div>
+</div>
+{% endblock %}

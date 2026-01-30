@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Лобби - Игра в Кости{% endblock %}
+
+{% block content %}
+<div class="lobby-page">
+    <h1>Выбор Лобби</h1>
+    
+    <div class="lobby-content">
+        <!-- Создание нового лобби -->
+        <div class="create-lobby-section">
+            <h2>Создать Лобби</h2>
+            <form id="createLobbyForm" class="lobby-form">
+                <div class="form-group">
+                    <label>Тип лобби:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="lobby_type" value="open" checked>
+                            <span>Открытое</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="lobby_type" value="private">
+                            <span>Закрытое (с паролем)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="max_players">Максимум игроков:</label>
+                    <select id="max_players" name="max_players" class="form-select">
+                        <option value="2">2 игрока</option>
+                        <option value="3">3 игрока</option>
+                        <option value="4">4 игрока</option>
+                        <option value="5">5 игроков</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Создать Лобби</button>
+            </form>
+        </div>
+        
+        <!-- Список существующих открытых лобби -->
+        <div class="existing-lobbies-section">
+            <h2>Существующие Лобби</h2>
+            <div id="lobbiesList" class="lobbies-list">
+                {% if open_lobbies %}
+                    {% for lobby in open_lobbies %}
+                    <div class="lobby-item">
+                        <div class="lobby-info">
+                            <div class="lobby-host">🎮 Хост: {{ lobby.host[:8] }}</div>
+                            <div class="lobby-players">👥 {{ lobby.current_players }}/{{ lobby.max_players }}</div>
+                            <div class="lobby-time">🕐 {{ lobby.created_at }}</div>
+                        </div>
+                        <a href="{{ url_for('join_lobby', lobby_id=lobby.id) }}" 
+                           class="btn btn-success btn-sm">
+                            Присоединиться
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-lobbies">
+                        <p>Нет доступных лобби</p>
+                        <p class="text-muted">Создайте новое лобби или подождите</p>
+                    </div>
+                {% endif %}
+            </div>
+            <button id="refreshLobbies" class="btn btn-secondary btn-sm">🔄 Обновить список</button>
+        </div>
+    </div>
+    
+    <a href="{{ url_for('index') }}" class="btn btn-back">← Назад в меню</a>
+</div>
+
+<!-- Модальное окно для отображения пароля -->
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <h2>Лобби создано!</h2>
+        <p>Ваш пароль для приглашения друзей:</p>
+        <div class="password-display">
+            <span id="lobbyPassword"></span>
+            <button id="copyPassword" class="btn btn-sm">📋 Копировать</button>
+        </div>
+        <p class="text-muted">Сохраните этот пароль, чтобы ваши друзья могли присоединиться</p>
+        <button id="continueButton" class="btn btn-primary">Продолжить</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('createLobbyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    
+    try {
+        const response = await fetch('{{ url_for("create_lobby") }}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Если это закрытое лобби, показываем пароль
+            if (data.password) {
+                document.getElementById('lobbyPassword').textContent = data.password;
+                document.getElementById('passwordModal').style.display = 'flex';
+                
+                // Обработка кнопки продолжить
+                document.getElementById('continueButton').onclick = () => {
+                    window.location.href = data.redirect_url;
+                };
+                
+                // Копирование пароля
+                document.getElementById('copyPassword').onclick = () => {
+                    navigator.clipboard.writeText(data.password);
+                    alert('Пароль скопирован!');
+                };
+            } else {
+                // Если открытое лобби, сразу переходим
+                window.location.href = data.redirect_url;
+            }
+        } else {
+            alert('Ошибка: ' + (data.error || 'Не удалось создать лобби'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Произошла ошибка при создании лобби');
+    }
+});
+
+// Обновление списка лобби
+document.getElementById('refreshLobbies').addEventListener('click', () => {
+    location.reload();
+});
+
+// Закрытие модального окна при клике вне его
+window.onclick = function(event) {
+    const modal = document.getElementById('passwordModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

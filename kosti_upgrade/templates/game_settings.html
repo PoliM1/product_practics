@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Настройки игры - Игра в Кости{% endblock %}
+
+{% block content %}
+<div class="game-settings-page">
+    <h1>⚙️ Настройки Игры</h1>
+    
+    <div class="settings-container">
+        <!-- Информация о лобби -->
+        <div class="lobby-info-box">
+            <h3>Информация о лобби</h3>
+            <div class="info-item">
+                <span class="info-label">Тип:</span>
+                <span class="info-value">{{ 'Закрытое 🔒' if lobby.type == 'private' else 'Открытое 🌐' }}</span>
+            </div>
+            {% if lobby.password and is_host %}
+            <div class="info-item">
+                <span class="info-label">Пароль:</span>
+                <span class="info-value password-value">
+                    {{ lobby.password }}
+                    <button onclick="copyPassword('{{ lobby.password }}')" class="btn-copy">📋</button>
+                </span>
+            </div>
+            {% endif %}
+            <div class="info-item">
+                <span class="info-label">Игроков:</span>
+                <span class="info-value" id="playerCount">{{ lobby.players|length }}/{{ lobby.max_players }}</span>
+            </div>
+        </div>
+        
+        <!-- Список игроков -->
+        <div class="players-list-box">
+            <h3>Игроки в лобби</h3>
+            <div id="playersList" class="players-list">
+                {% for player in lobby.players %}
+                <div class="player-item" data-player-id="{{ player }}">
+                    <span class="player-icon">👤</span>
+                    <span class="player-name">
+                        {{ 'Вы' if player == user_id else 'Игрок ' + loop.index|string }}
+                        {{ ' (Хост) 👑' if player == lobby.host else '' }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Настройки игры (только для хоста) -->
+        {% if is_host %}
+        <div class="game-settings-box">
+            <h3>Параметры игры</h3>
+            <form id="settingsForm" class="settings-form">
+                <div class="form-group">
+                    <label for="dice_count">Количество костей:</label>
+                    <div class="input-with-display">
+                        <input type="range" 
+                               id="dice_count" 
+                               name="dice_count" 
+                               min="1" 
+                               max="10" 
+                               value="{{ lobby.game_settings.dice_count }}"
+                               class="range-input">
+                        <span id="diceCountValue" class="value-display">{{ lobby.game_settings.dice_count }}</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="win_score">Очков для победы:</label>
+                    <div class="input-with-display">
+                        <input type="range" 
+                               id="win_score" 
+                               name="win_score" 
+                               min="50" 
+                               max="500" 
+                               step="10"
+                               value="{{ lobby.game_settings.win_score }}"
+                               class="range-input">
+                        <span id="winScoreValue" class="value-display">{{ lobby.game_settings.win_score }}</span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-secondary btn-sm">Сохранить настройки</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="game-settings-box">
+            <h3>Параметры игры</h3>
+            <div class="settings-display">
+                <div class="setting-item">
+                    <span class="setting-label">🎲 Количество костей:</span>
+                    <span class="setting-value" id="diceCountDisplay">{{ lobby.game_settings.dice_count }}</span>
+                </div>
+                <div class="setting-item">
+                    <span class="setting-label">🏆 Очков для победы:</span>
+                    <span class="setting-value" id="winScoreDisplay">{{ lobby.game_settings.win_score }}</span>
+                </div>
+            </div>
+            <p class="text-muted">Только хост может изменять настройки</p>
+        </div>
+        {% endif %}
+        
+        <!-- Кнопки действий -->
+        <div class="action-buttons">
+            {% if is_host %}
+            <button id="startGameBtn" class="btn btn-primary btn-large" disabled>
+                Начать игру
+            </button>
+            <p class="text-muted" id="startGameHint">Ожидание второго игрока...</p>
+            {% else %}
+            <div class="waiting-host">
+                <div class="spinner"></div>
+                <p>Ожидание начала игры от хоста...</p>
+            </div>
+            {% endif %}
+            
+            <button id="leaveLobbyBtn" class="btn btn-danger">Покинуть лобби</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const lobbyId = '{{ lobby_id }}';
+const isHost = {{ 'true' if is_host else 'false' }};
+const socket = io();
+
+// Подключение к комнате лобби
+socket.emit('join', { lobby_id: lobbyId });
+
+// Обновление количества игроков
+socket.on('player_joined', (data) => {
+    updatePlayersList(data.players);
+    updatePlayerCount(data.player_count);
+    checkCanStartGame(data.player_count);
+});
+
+socket.on('player_left', (data) => {
+    updatePlayersList(data.players);
+    updatePlayerCount(data.player_count);
+    checkCanStartGame(data.player_count);
+});
+
+// Обновление настроек
+socket.on('settings_updated', (data) => {
+    if (!isHost) {
+        document.getElementById('diceCountDisplay').textContent = data.dice_count;
+        document.getElementById('winScoreDisplay').textContent = data.win_score;
+    }
+});
+
+// Начало игры
+socket.on('game_started', (data) => {
+    window.location.href = data.redirect_url;
+});
+
+// Обновление списка игроков
+function updatePlayersList(players) {
+    const playersList = document.getElementById('playersList');
+    playersList.innerHTML = '';
+    players.forEach((player, index) => {
+        const playerDiv = document.createElement('div');
+        playerDiv.className = 'player-item';
+        playerDiv.innerHTML = `
+            <span class="player-icon">👤</span>
+            <span class="player-name">Игрок ${index + 1}</span>
+        `;
+        playersList.appendChild(playerDiv);
+    });
+}
+
+function updatePlayerCount(count) {
+    document.getElementById('playerCount').textContent = `${count}/{{ lobby.max_players }}`;
+}
+
+function checkCanStartGame(playerCount) {
+    if (isHost) {
+        const startBtn = document.getElementById('startGameBtn');
+        const hint = document.getElementById('startGameHint');
+        if (playerCount >= 2) {
+            startBtn.disabled = false;
+            hint.textContent = 'Готово к началу!';
+            hint.style.color = '#4CAF50';
+        } else {
+            startBtn.disabled = true;
+            hint.textContent = 'Ожидание второго игрока...';
+            hint.style.color = '#888';
+        }
+    }
+}
+
+// Обработчики для хоста
+if (isHost) {
+    // Обновление отображения значений ползунков
+    const diceCountInput = document.getElementById('dice_count');
+    const winScoreInput = document.getElementById('win_score');
+    
+    diceCountInput.addEventListener('input', (e) => {
+        document.getElementById('diceCountValue').textContent = e.target.value;
+    });
+    
+    winScoreInput.addEventListener('input', (e) => {
+        document.getElementById('winScoreValue').textContent = e.target.value;
+    });
+    
+    // Сохранение настроек
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        
+        try {
+            const response = await fetch(`/update_settings/${lobbyId}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('Настройки сохранены');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Ошибка при сохранении настроек');
+        }
+    });
+    
+    // Начало игры
+    document.getElementById('startGameBtn').addEventListener('click', async () => {
+        try {
+            const response = await fetch(`/start_game/${lobbyId}`, {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            } else {
+                alert(data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Ошибка при начале игры');
+        }
+    });
+}
+
+// Выход из лобби
+document.getElementById('leaveLobbyBtn').addEventListener('click', async () => {
+    if (confirm('Вы уверены, что хотите покинуть лобби?')) {
+        try {
+            await fetch(`/leave_lobby/${lobbyId}`, { method: 'POST' });
+            window.location.href = '{{ url_for("lobby_page") }}';
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+});
+
+// Копирование пароля
+function copyPassword(password) {
+    navigator.clipboard.writeText(password);
+    showNotification('Пароль скопирован!');
+}
+
+// Показ уведомлений
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
+
+// Проверка начального количества игроков
+checkCanStartGame({{ lobby.players|length }});
+</script>
+{% endblock %}
