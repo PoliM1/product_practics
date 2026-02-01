@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ожидание игроков</title>
+    <meta charset="utf-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Arial Black', Arial, sans-serif; 
+            background: 
+                linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)),
+                url('/static/background.jpg') center/cover fixed no-repeat;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); 
+            backdrop-filter: blur(20px); border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 30px; padding: 50px; max-width: 700px; width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+        }
+
+        .back-home {
+            position: absolute; top: 20px; left: 20px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)); 
+            backdrop-filter: blur(20px); border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 15px; padding: 15px 30px; font-size: 1.2em; font-weight: bold;
+            color: #ffffff; cursor: pointer; transition: all 0.4s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.8); text-decoration: none;
+        }
+        .back-home:hover {
+            transform: translateY(-5px); border-color: #ffd700; 
+            box-shadow: 0 15px 40px rgba(255,215,0,0.4);
+        }
+
+        h1 {
+            color: #ffd700; text-align: center; font-size: 3em; margin-bottom: 15px;
+            text-shadow: 0 0 10px #ffd700, 2px 2px 4px rgba(0,0,0,0.9);
+        }
+
+        .room-id {
+            text-align: center; color: rgba(255,255,255,0.8);
+            font-size: 1.2em; margin-bottom: 40px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        .room-code {
+            background: rgba(255,215,0,0.2); border: 2px solid #ffd700;
+            padding: 10px 25px; border-radius: 15px; display: inline-block;
+            font-weight: bold; color: #ffd700; letter-spacing: 3px;
+            text-shadow: 0 0 10px #ffd700;
+        }
+
+        .settings-panel {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            padding: 25px; border-radius: 20px; margin-bottom: 35px;
+        }
+
+        .settings-title {
+            font-size: 1.5em; font-weight: bold; color: #ffd700;
+            margin-bottom: 20px; text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+
+        .settings-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+        }
+
+        .setting-item {
+            text-align: center;
+        }
+        .setting-icon {
+            font-size: 2.5em; margin-bottom: 8px;
+            filter: drop-shadow(0 0 10px rgba(255,215,0,0.5));
+        }
+        .setting-value {
+            font-size: 1.8em; font-weight: bold; color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+        .setting-label {
+            font-size: 0.9em; color: rgba(255,255,255,0.7); margin-top: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .players-title {
+            font-size: 2em; font-weight: bold; color: #ffd700;
+            margin-bottom: 25px; text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+
+        .players-list {
+            margin-bottom: 35px;
+        }
+
+        .player-item {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            padding: 20px 25px; border-radius: 15px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: all 0.3s;
+        }
+        .player-item.joining {
+            animation: pulse 1s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); border-color: rgba(255,255,255,0.3); }
+            50% { transform: scale(1.02); border-color: #ffd700; }
+        }
+
+        .player-name {
+            font-size: 1.5em; font-weight: bold; color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+
+        .player-badge {
+            background: rgba(255,215,0,0.3); border: 2px solid #ffd700;
+            padding: 8px 20px; border-radius: 20px; font-size: 1em;
+            font-weight: bold; color: #ffd700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        .player-badge.host {
+            background: rgba(255,107,107,0.3); border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .empty-slot {
+            background: rgba(255,255,255,0.05); border: 2px dashed rgba(255,255,255,0.3);
+            padding: 20px 25px; border-radius: 15px; margin-bottom: 15px;
+            text-align: center; color: rgba(255,255,255,0.5);
+            font-style: italic; font-size: 1.2em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .waiting-animation {
+            text-align: center; margin: 25px 0;
+        }
+        .dots {
+            display: inline-block;
+        }
+        .dot {
+            display: inline-block; width: 15px; height: 15px;
+            border-radius: 50%; background: #ffd700; margin: 0 5px;
+            animation: bounce 1.4s infinite ease-in-out both;
+            box-shadow: 0 0 10px #ffd700;
+        }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .btn {
+            width: 100%; padding: 20px; font-size: 1.6em; font-weight: bold;
+            border: none; border-radius: 20px; cursor: pointer;
+            transition: all 0.3s; color: white; margin-top: 15px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .btn-start {
+            background: linear-gradient(145deg, #00d4aa, #00b894);
+            box-shadow: 0 10px 30px rgba(0,212,170,0.5);
+        }
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0,212,170,0.7);
+        }
+        .btn-start:disabled {
+            background: #666; cursor: not-allowed; opacity: 0.5;
+        }
+
+        .btn-leave {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a52);
+            box-shadow: 0 10px 30px rgba(255,107,107,0.5);
+        }
+        .btn-leave:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(255,107,107,0.7);
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 35px 25px; }
+            h1 { font-size: 2.2em; }
+            .settings-grid { grid-template-columns: 1fr; gap: 15px; }
+            .setting-item {
+                display: flex; align-items: center; justify-content: center; gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-home">🏠 В меню</a>
+
+    <div class="container">
+        <h1>⏳ Ожидание игроков</h1>
+        <div class="room-id">
+            Код комнаты: <span class="room-code" id="roomCode">{{ room_id }}</span>
+        </div>
+
+        <div class="settings-panel">
+            <div class="settings-title">⚙️ Настройки игры</div>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <div class="setting-icon">👥</div>
+                    <div class="setting-value" id="maxPlayers">-</div>
+                    <div class="setting-label">игроков</div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-icon">🎲</div>
+                    <div class="setting-value" id="diceCount">-</div>
+                    <div class="setting-label">костей</div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-icon">🎯</div>
+                    <div class="setting-value" id="maxScore">-</div>
+                    <div class="setting-label">очков</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="players-title">👥 Игроки в лобби</div>
+        <div class="players-list" id="playersList"></div>
+
+        <div class="waiting-animation" id="waitingAnimation">
+            <div class="dots">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+            <div style="margin-top: 15px; font-size: 1.2em; color: rgba(255,255,255,0.8); text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                Ожидание игроков...
+            </div>
+        </div>
+
+        <button id="startBtn" class="btn btn-start" onclick="startGame()" disabled>
+            🎮 Начать игру
+        </button>
+        <button class="btn btn-leave" onclick="leaveLobby()">
+            ❌ Покинуть лобби
+        </button>
+    </div>
+
+    <script>
+        const roomId = '{{ room_id }}';
+        const clientId = Math.random().toString(36).substring(2, 15);
+        const ws = new WebSocket(`ws://${window.location.host}/ws/${clientId}`);
+
+        let isHost = false;
+        let settings = {};
+        let players = [];
+
+        ws.onopen = () => {
+            console.log('Connected to waiting room');
+        };
+
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+
+            if (message.type === 'join_success') {
+                players = message.players;
+                settings = message.settings;
+                updateSettings();
+                updatePlayers();
+                checkHost();
+            } else if (message.type === 'player_joined') {
+                players = message.players;
+                updatePlayers();
+                checkHost();
+            } else if (message.type === 'player_left') {
+                players = message.players;
+                updatePlayers();
+                checkHost();
+            } else if (message.type === 'game_starting') {
+                window.location.href = `/online-game/${roomId}`;
+            } else if (message.type === 'lobby_closed') {
+                alert(message.message);
+                window.location.href = '/online';
+            }
+        };
+
+        function updateSettings() {
+            document.getElementById('maxPlayers').textContent = settings.max_players;
+            document.getElementById('diceCount').textContent = settings.dice_count;
+            document.getElementById('maxScore').textContent = settings.max_score;
+        }
+
+        function updatePlayers() {
+            const playersList = document.getElementById('playersList');
+            playersList.innerHTML = '';
+
+            players.forEach(player => {
+                const playerItem = document.createElement('div');
+                playerItem.className = 'player-item';
+
+                playerItem.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-badge ${player.is_host ? 'host' : ''}">
+                        ${player.is_host ? '👑 Хост' : '👤 Игрок'}
+                    </div>
+                `;
+
+                playersList.appendChild(playerItem);
+            });
+
+            // Добавляем пустые слоты
+            for (let i = players.length; i < settings.max_players; i++) {
+                const emptySlot = document.createElement('div');
+                emptySlot.className = 'empty-slot';
+                emptySlot.textContent = 'Ожидание игрока...';
+                playersList.appendChild(emptySlot);
+            }
+
+            // Скрываем/показываем анимацию ожидания
+            const waitingAnimation = document.getElementById('waitingAnimation');
+            if (players.length >= 2) {
+                waitingAnimation.style.display = 'none';
+            } else {
+                waitingAnimation.style.display = 'block';
+            }
+        }
+
+        function checkHost() {
+            // Проверяем, является ли текущий пользователь хостом
+            const currentPlayer = players.find(p => p.id === clientId);
+            if (currentPlayer) {
+                isHost = currentPlayer.is_host;
+            }
+
+            // Включаем кнопку старта только для хоста и если есть минимум 2 игрока
+            const startBtn = document.getElementById('startBtn');
+            if (isHost && players.length >= 2) {
+                startBtn.disabled = false;
+            } else {
+                startBtn.disabled = true;
+            }
+        }
+
+        function startGame() {
+            if (!isHost) {
+                alert('Только хост может начать игру');
+                return;
+            }
+
+            if (players.length < 2) {
+                alert('Нужно минимум 2 игрока');
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                type: 'start_game',
+                data: { room_id: roomId }
+            }));
+        }
+
+        function leaveLobby() {
+            if (confirm('Вы уверены, что хотите покинуть лобби?')) {
+                ws.send(JSON.stringify({
+                    type: 'leave_lobby',
+                    data: { room_id: roomId }
+                }));
+                window.location.href = '/online';
+            }
+        }
+
+        // Обработка закрытия страницы
+        window.addEventListener('beforeunload', () => {
+            ws.send(JSON.stringify({
+                type: 'leave_lobby',
+                data: { room_id: roomId }
+            }));
+        });
+    </script>
+</body>
+</html>

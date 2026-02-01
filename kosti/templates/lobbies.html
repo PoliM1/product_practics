@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Онлайн лобби - Игра в кости</title>
+    <meta charset="utf-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Arial Black', Arial, sans-serif; 
+            background: 
+                linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)),
+                url('/static/background.jpg') center/cover fixed no-repeat;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        h1 { 
+            font-size: 3.5em; text-align: center; margin: 30px 0 50px; 
+            color: #ffffff !important; 
+            text-shadow: 0 0 10px #ffffff, 0 0 20px #ffd700, 2px 2px 4px rgba(0,0,0,0.9);
+            letter-spacing: 6px; font-weight: bold;
+        }
+
+        .back-home {
+            position: absolute; top: 20px; left: 20px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)); 
+            backdrop-filter: blur(20px); border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 15px; padding: 15px 30px; font-size: 1.2em; font-weight: bold;
+            color: #ffffff; cursor: pointer; transition: all 0.4s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.8); text-decoration: none;
+        }
+        .back-home:hover {
+            transform: translateY(-5px); border-color: #ffd700; 
+            box-shadow: 0 15px 40px rgba(255,215,0,0.4);
+        }
+
+        .main-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 30px;
+        }
+
+        .panel {
+            background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); 
+            backdrop-filter: blur(20px); border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 30px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+        }
+
+        .panel h2 {
+            font-size: 2.2em; margin-bottom: 30px; color: #ffd700; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9); text-align: center;
+        }
+
+        .lobby-list {
+            max-height: 550px; overflow-y: auto; padding-right: 10px;
+        }
+        .lobby-list::-webkit-scrollbar { width: 10px; }
+        .lobby-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .lobby-list::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.5); border-radius: 10px; }
+
+        .lobby-item {
+            background: linear-gradient(145deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1)); 
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 20px; padding: 25px; margin-bottom: 20px;
+            cursor: pointer; transition: all 0.4s;
+        }
+        .lobby-item:hover {
+            transform: translateY(-5px); border-color: #ffd700;
+            box-shadow: 0 15px 40px rgba(255,215,0,0.4);
+        }
+
+        .lobby-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+        }
+        .lobby-name {
+            font-size: 1.6em; font-weight: bold; color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+        .lobby-players {
+            background: rgba(255,215,0,0.3); border: 2px solid #ffd700;
+            padding: 8px 20px; border-radius: 20px; font-size: 1.1em;
+            font-weight: bold; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        .lobby-info {
+            color: rgba(255,255,255,0.9); font-size: 1.1em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .empty-message {
+            text-align: center; color: rgba(255,255,255,0.6); font-size: 1.5em;
+            padding: 60px 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-group label {
+            display: block; margin-bottom: 10px; color: #ffd700;
+            font-weight: bold; font-size: 1.2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+        .form-group input, .form-group select {
+            width: 100%; padding: 15px; border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 15px; font-size: 1.1em; font-weight: bold;
+            background: rgba(255,255,255,0.1); color: #ffea00;
+            backdrop-filter: blur(10px); transition: all 0.3s;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none; border-color: #00ffc3;
+            box-shadow: 0 0 20px rgba(255,215,0,0.4);
+        }
+        .form-group input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .checkbox-group {
+            display: flex; align-items: center; gap: 15px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 25px; height: 25px; cursor: pointer;
+        }
+        .checkbox-group label {
+            margin: 0; font-size: 1.1em;
+        }
+
+        .btn-create {
+            width: 100%; padding: 20px; font-size: 1.6em; font-weight: bold;
+            background: linear-gradient(145deg, #00d4aa, #00b894);
+            border: none; border-radius: 20px; color: white; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,212,170,0.5);
+            transition: all 0.3s; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+        .btn-create:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0,212,170,0.7);
+        }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1)); 
+            backdrop-filter: blur(30px); border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 30px; padding: 50px; max-width: 500px; width: 90%;
+            text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+        }
+
+        .modal-content h3 {
+            color: #ffd700; margin-bottom: 30px; font-size: 2.2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+
+        .modal-content input {
+            width: 100%; padding: 15px; border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 15px; font-size: 1.2em; font-weight: bold;
+            background: rgba(255,255,255,0.1); color: #fff;
+            margin-bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        .modal-content input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .password-display {
+            background: rgba(255,215,0,0.2); border: 3px solid #ffd700;
+            padding: 30px; border-radius: 20px; margin: 25px 0;
+        }
+        .password-code {
+            font-size: 3em; font-weight: bold; color: #ffd700;
+            letter-spacing: 10px; margin: 15px 0;
+            text-shadow: 0 0 20px #ffd700, 2px 2px 4px rgba(0,0,0,0.9);
+        }
+        .password-label {
+            color: rgba(255,255,255,0.9); font-size: 1.2em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .modal-buttons {
+            display: flex; gap: 15px; margin-top: 20px;
+        }
+        .btn-modal {
+            flex: 1; padding: 15px; border: none; border-radius: 15px;
+            font-size: 1.2em; font-weight: bold; cursor: pointer;
+            transition: all 0.3s; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        .btn-join {
+            background: linear-gradient(145deg, #00d4aa, #00b894); color: rgb(255, 255, 255);
+            box-shadow: 0 5px 20px rgba(0,212,170,0.4);
+        }
+        .btn-join:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,212,170,0.6);
+        }
+        .btn-cancel {
+            background: rgba(255,255,255,0.2); color: #fff;
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+        .btn-cancel:hover {
+            transform: translateY(-3px);
+            background: rgba(255,255,255,0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 2.5em; }
+        }
+        @media (max-width: 768px) {
+            .panel { padding: 25px; }
+            .back-home { position: relative; top: 0; left: 0; margin-bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-home">🏠 В меню</a>
+
+    <div class="container">
+        <h1>🌐 Онлайн лобби 🌐</h1>
+
+        <div class="main-grid">
+            <!-- Левая панель: Список лобби -->
+            <div class="panel">
+                <h2>📋 Доступные лобби</h2>
+                <div class="lobby-list" id="lobbyList">
+                    <div class="empty-message">Загрузка лобби...</div>
+                </div>
+            </div>
+
+            <!-- Правая панель: Создание лобби -->
+            <div class="panel">
+                <h2>➕ Создать лобби</h2>
+                <form id="createLobbyForm">
+                    <div class="form-group">
+                        <label for="hostName">Ваше имя:</label>
+                        <input type="text" id="hostName" required maxlength="20" placeholder="Введите имя">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="maxPlayers">Количество игроков:</label>
+                        <select id="maxPlayers">
+                            <option value="2">2 игрока</option>
+                            <option value="3">3 игрока</option>
+                            <option value="4" selected>4 игрока</option>
+                            <option value="5">5 игроков</option>
+                            <option value="6">6 игроков</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="diceCount">Количество костей:</label>
+                        <select id="diceCount">
+                            <option value="1">1 кость</option>
+                            <option value="2" selected>2 кости</option>
+                            <option value="3">3 кости</option>
+                            <option value="4">4 кости</option>
+                            <option value="5">5 костей</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="maxScore">Играть до:</label>
+                        <select id="maxScore">
+                            <option value="10">10 очков</option>
+                            <option value="20">20 очков</option>
+                            <option value="30">30 очков</option>
+                            <option value="50" selected>50 очков</option>
+                            <option value="75">75 очков</option>
+                            <option value="100">100 очков</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="isPrivate">
+                            <label for="isPrivate">🔒 Закрытое лобби (с паролем)</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-create">Создать лобби</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для входа -->
+    <div id="joinModal" class="modal">
+        <div class="modal-content">
+            <h3>Присоединиться к лобби</h3>
+            <input type="text" id="joinName" placeholder="Введите ваше имя" maxlength="20">
+            <input type="text" id="joinPassword" placeholder="Пароль (если требуется)" style="display: none;">
+            <div class="modal-buttons">
+                <button class="btn-modal btn-join" onclick="confirmJoin()">Войти</button>
+                <button class="btn-modal btn-cancel" onclick="closeJoinModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно с паролем -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <h3>🎉 Лобби создано!</h3>
+            <div class="password-display">
+                <p class="password-label">Ваш пароль для закрытого лобби:</p>
+                <div class="password-code" id="passwordCode"></div>
+                <p class="password-label">Поделитесь им с друзьями</p>
+            </div>
+            <button class="btn-modal btn-join" onclick="closePasswordModal()">Понятно</button>
+        </div>
+    </div>
+
+    <script>
+        const clientId = Math.random().toString(36).substring(2, 15);
+        const ws = new WebSocket(`ws://${window.location.host}/ws/${clientId}`);
+        let selectedRoomId = null;
+
+        ws.onopen = () => {
+            console.log('Connected to server');
+            ws.send(JSON.stringify({ type: 'get_lobbies' }));
+        };
+
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+
+            if (message.type === 'lobbies_list') {
+                updateLobbyList(message.lobbies);
+            } else if (message.type === 'lobby_created') {
+                if (message.password) {
+                    document.getElementById('passwordCode').textContent = message.password;
+                    document.getElementById('passwordModal').classList.add('active');
+                }
+                setTimeout(() => {
+                    window.location.href = `/waiting/${message.room_id}`;
+                }, message.password ? 3000 : 500);
+            } else if (message.type === 'new_lobby' || message.type === 'lobby_deleted') {
+                ws.send(JSON.stringify({ type: 'get_lobbies' }));
+            } else if (message.type === 'join_success') {
+                closeJoinModal();
+                window.location.href = `/waiting/${message.room_id}`;
+            } else if (message.type === 'join_error') {
+                alert(message.message);
+            }
+        };
+
+        function updateLobbyList(lobbies) {
+            const lobbyList = document.getElementById('lobbyList');
+
+            if (lobbies.length === 0) {
+                lobbyList.innerHTML = '<div class="empty-message">Нет доступных лобби<br>Создайте своё!</div>';
+                return;
+            }
+
+            lobbyList.innerHTML = '';
+            lobbies.forEach(lobby => {
+                const lobbyItem = document.createElement('div');
+                lobbyItem.className = 'lobby-item';
+                lobbyItem.onclick = () => openJoinModal(lobby.room_id);
+
+                lobbyItem.innerHTML = `
+                    <div class="lobby-header">
+                        <div class="lobby-name">🎮 ${lobby.host_name}</div>
+                        <div class="lobby-players">${lobby.players_count}/${lobby.max_players}</div>
+                    </div>
+                    <div class="lobby-info">
+                        🎲 ${lobby.dice_count} ${lobby.dice_count === 1 ? 'кость' : lobby.dice_count < 5 ? 'кости' : 'костей'} • 
+                        🎯 До ${lobby.max_score} очков
+                    </div>
+                `;
+
+                lobbyList.appendChild(lobbyItem);
+            });
+        }
+
+        document.getElementById('createLobbyForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const hostName = document.getElementById('hostName').value.trim();
+            if (!hostName) {
+                alert('Введите ваше имя');
+                return;
+            }
+
+            const lobbyData = {
+                host_name: hostName,
+                max_players: parseInt(document.getElementById('maxPlayers').value),
+                dice_count: parseInt(document.getElementById('diceCount').value),
+                max_score: parseInt(document.getElementById('maxScore').value),
+                is_private: document.getElementById('isPrivate').checked
+            };
+
+            ws.send(JSON.stringify({
+                type: 'create_lobby',
+                data: lobbyData
+            }));
+        });
+
+        function openJoinModal(roomId) {
+            selectedRoomId = roomId;
+            document.getElementById('joinModal').classList.add('active');
+        }
+
+        function closeJoinModal() {
+            document.getElementById('joinModal').classList.remove('active');
+            document.getElementById('joinName').value = '';
+            document.getElementById('joinPassword').value = '';
+            selectedRoomId = null;
+        }
+
+        function confirmJoin() {
+            const playerName = document.getElementById('joinName').value.trim();
+            const password = document.getElementById('joinPassword').value.trim();
+
+            if (!playerName) {
+                alert('Введите ваше имя');
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                type: 'join_lobby',
+                data: {
+                    room_id: selectedRoomId,
+                    player_name: playerName,
+                    password: password || null
+                }
+            }));
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('active');
+        }
+
+        setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'get_lobbies' }));
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
