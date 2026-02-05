@@ -105,12 +105,12 @@
         .form-group input, .form-group select {
             width: 100%; padding: 15px; border: 3px solid rgba(255,255,255,0.3);
             border-radius: 15px; font-size: 1.1em; font-weight: bold;
-            background: rgba(255,255,255,0.1); color: #ffea00;
+            background: rgba(255,255,255,0.1); color: #fff;
             backdrop-filter: blur(10px); transition: all 0.3s;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
         .form-group input:focus, .form-group select:focus {
-            outline: none; border-color: #00ffc3;
+            outline: none; border-color: #ffd700;
             box-shadow: 0 0 20px rgba(255,215,0,0.4);
         }
         .form-group input::placeholder {
@@ -125,6 +125,15 @@
         }
         .checkbox-group label {
             margin: 0; font-size: 1.1em;
+        }
+
+        .password-input {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .password-input.show {
+            display: block;
         }
 
         .btn-create {
@@ -191,7 +200,7 @@
             transition: all 0.3s; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
         .btn-join {
-            background: linear-gradient(145deg, #00d4aa, #00b894); color: rgb(255, 255, 255);
+            background: linear-gradient(145deg, #00d4aa, #00b894); color: white;
             box-shadow: 0 5px 20px rgba(0,212,170,0.4);
         }
         .btn-join:hover {
@@ -277,9 +286,15 @@
 
                     <div class="form-group">
                         <div class="checkbox-group">
-                            <input type="checkbox" id="isPrivate">
+                            <input type="checkbox" id="isPrivate" onchange="togglePasswordInput()">
                             <label for="isPrivate">🔒 Закрытое лобби (с паролем)</label>
                         </div>
+                    </div>
+
+                    <!-- Поле для ввода пароля -->
+                    <div class="form-group password-input" id="passwordInputGroup">
+                        <label for="customPassword">Введите пароль:</label>
+                        <input type="text" id="customPassword" maxlength="10" placeholder="Ваш пароль (макс. 10 символов)">
                     </div>
 
                     <button type="submit" class="btn-create">Создать лобби</button>
@@ -347,6 +362,18 @@
             }
         };
 
+        function togglePasswordInput() {
+            const isPrivate = document.getElementById('isPrivate').checked;
+            const passwordInput = document.getElementById('passwordInputGroup');
+            
+            if (isPrivate) {
+                passwordInput.classList.add('show');
+            } else {
+                passwordInput.classList.remove('show');
+                document.getElementById('customPassword').value = '';
+            }
+        }
+
         function updateLobbyList(lobbies) {
             const lobbyList = document.getElementById('lobbyList');
 
@@ -385,12 +412,24 @@
                 return;
             }
 
+            const isPrivate = document.getElementById('isPrivate').checked;
+            let password = null;
+
+            if (isPrivate) {
+                password = document.getElementById('customPassword').value.trim();
+                if (!password) {
+                    alert('Введите пароль для закрытого лобби');
+                    return;
+                }
+            }
+
             const lobbyData = {
                 host_name: hostName,
                 max_players: parseInt(document.getElementById('maxPlayers').value),
                 dice_count: parseInt(document.getElementById('diceCount').value),
                 max_score: parseInt(document.getElementById('maxScore').value),
-                is_private: document.getElementById('isPrivate').checked
+                is_private: isPrivate,
+                password: password
             };
 
             ws.send(JSON.stringify({

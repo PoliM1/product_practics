@@ -1,23 +1,12 @@
-
 # main.py - Полный код FastAPI сервера для игры в кости с онлайн режимом
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi import FastAPI, Request
-
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from typing import Dict, List
+from typing import Dict
 import random
-
 import string
 import json
-
-app = FastAPI()
-
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -30,10 +19,6 @@ connections: Dict[str, WebSocket] = {}
 def generate_room_id():
     """Генерирует уникальный ID комнаты"""
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-
-def generate_password():
-    """Генерирует пароль для закрытой комнаты"""
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
 # Оффлайн режим
 @app.get("/", response_class=HTMLResponse)
@@ -121,7 +106,7 @@ async def handle_get_lobbies(websocket: WebSocket):
 async def handle_create_lobby(websocket: WebSocket, client_id: str, data: dict):
     """Создать новое лобби"""
     room_id = generate_room_id()
-    password = generate_password() if data['is_private'] else None
+    password = data.get('password', None)  # Берем пароль от пользователя
     
     lobby = {
         'room_id': room_id,
