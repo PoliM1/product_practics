@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🎲 Игра в кости - Онлайн</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Arial Black', Arial, sans-serif; 
+            background: 
+                linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)),
+                radial-gradient(circle at 20% 50%, rgba(120,40,200,0.3), transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(255,100,100,0.3), transparent 50%),
+                linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            background-attachment: fixed;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        h1 { 
+            font-size: 4em; text-align: center; margin: 30px 0 50px; 
+            color: #ffffff !important; 
+            text-shadow: 0 0 10px #ffffff, 0 0 20px #ffd700, 2px 2px 4px rgba(0,0,0,0.9);
+            letter-spacing: 8px; font-weight: bold;
+        }
+
+        /* ГЛАВНОЕ МЕНЮ */
+        .menu { text-align: center; margin: 80px 0; }
+        .mode-grid { 
+            display: flex; justify-content: center; gap: 40px; 
+            flex-wrap: wrap; max-width: 900px; margin: 0 auto;
+        }
+        .menu button, .main-btn {
+            background: linear-gradient(145deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1)); 
+            backdrop-filter: blur(20px); 
+            border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 25px; padding: 25px 45px; 
+            font-size: 1.6em; font-weight: bold;
+            color: #ffffff; cursor: pointer; 
+            transition: all 0.4s;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6), 0 0 30px rgba(255,255,255,0.2);
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.8); 
+            min-width: 250px;
+        }
+        .menu button:hover, .main-btn:hover {
+            transform: translateY(-10px); 
+            border-color: #ffd700; 
+            box-shadow: 0 25px 60px rgba(255,215,0,0.4), 0 0 50px rgba(255,215,0,0.5);
+        }
+
+        /* ОНЛАЙН ЛОББИ */
+        .lobby-screen { display: none; }
+        .lobby-container { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 30px; 
+            margin: 40px 0;
+        }
+        
+        .lobby-section {
+            background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            backdrop-filter: blur(20px);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+        }
+        
+        .lobby-section h2 {
+            font-size: 2em;
+            margin-bottom: 25px;
+            color: #ffd700;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-group input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .password-field {
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .lobby-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .lobby-item {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .lobby-item:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: #ffd700;
+            transform: translateX(5px);
+        }
+        
+        .lobby-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .lobby-host {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .lobby-players {
+            font-size: 1.1em;
+            color: #00d4aa;
+        }
+        
+        .lobby-details {
+            display: flex;
+            gap: 20px;
+            font-size: 0.95em;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .empty-lobbies {
+            text-align: center;
+            padding: 50px 20px;
+            color: rgba(255,255,255,0.5);
+            font-size: 1.2em;
+        }
+
+        /* WAITING ROOM */
+        .waiting-room {
+            display: none;
+        }
+        
+        .waiting-title {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #ffd700;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        }
+        
+        .players-waiting {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .waiting-player {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .waiting-player:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,215,0,0.5);
+        }
+        
+        .waiting-player.host {
+            border-color: rgba(255,215,0,0.6);
+            background: rgba(255,215,0,0.1);
+        }
+        
+        .waiting-player-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fff;
+            margin-top: 10px;
+        }
+        
+        .waiting-player-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .host-badge {
+            display: inline-block;
+            background: rgba(255,215,0,0.3);
+            border: 1px solid rgba(255,215,0,0.6);
+            border-radius: 12px;
+            padding: 5px 12px;
+            font-size: 0.8em;
+            color: #ffd700;
+            margin-top: 8px;
+        }
+        
+        .lobby-info {
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,215,0,0.5);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 30px auto;
+            max-width: 600px;
+        }
+        
+        .lobby-info h3 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8em;
+        }
+        
+        .lobby-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            text-align: center;
+        }
+        
+        .lobby-detail-item {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 12px;
+        }
+        
+        .lobby-detail-label {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 5px;
+        }
+        
+        .lobby-detail-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #00d4aa;
+        }
+        
+        .lobby-code {
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,215,0,0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 30px auto;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .lobby-code-label {
+            font-size: 1.2em;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 10px;
+        }
+        
+        .lobby-code-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffd700;
+            letter-spacing: 3px;
+        }
+        
+        .waiting-status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.2em;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .waiting-status.ready {
+            color: #00d4aa;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .lobby-details-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .waiting-title {
+                font-size: 1.8em;
+            }
+            
+            .players-waiting {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ИГРОВОЕ ПОЛЕ */
+        .game-screen { display: none; }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .game-info-item {
+            text-align: center;
+        }
+        
+        .game-info-label {
+            font-size: 1em;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 5px;
+        }
+        
+        .game-info-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .player-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            backdrop-filter: blur(20px);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            transition: all 0.4s;
+        }
+        
+        .player-card.active {
+            border-color: #00d4aa;
+            box-shadow: 0 20px 60px rgba(0,212,170,0.5);
+        }
+        
+        .player-card.winner {
+            border-color: #ffd700;
+            box-shadow: 0 20px 60px rgba(255,215,0,0.6);
+        }
+        
+        .player-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        
+        .player-score {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #00d4aa;
+        }
+        
+        .dice-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+        
+        .dice {
+            font-size: 5em;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.8));
+            transition: transform 0.3s;
+        }
+        
+        .dice.animate {
+            animation: diceRoll 0.8s ease-in-out;
+        }
+        
+        .roll-btn {
+            background: linear-gradient(145deg, #00d4aa, #00b894);
+            border: none;
+            border-radius: 15px;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,212,170,0.5);
+            transition: all 0.3s;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+        
+        .roll-btn:hover:not(:disabled) {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0,212,170,0.7);
+        }
+        
+        .roll-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .waiting-text {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            color: rgba(255,255,255,0.6);
+            font-style: italic;
+        }
+
+        .winner-announcement {
+            text-align: center;
+            margin: 40px 0;
+            padding: 30px;
+            background: rgba(255,215,0,0.2);
+            border: 4px solid rgba(255,215,0,0.7);
+            border-radius: 25px;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 3px 3px 8px rgba(0,0,0,0.9);
+            display: none;
+        }
+        
+        .game-buttons {
+            text-align: center;
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 15px 35px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(145deg, #00d4aa, #00b894);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(145deg, #a8edea, #fed6e3);
+            color: #333;
+        }
+        
+        .btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+
+        .info-banner {
+            background: rgba(255,215,0,0.15);
+            border: 2px solid rgba(255,215,0,0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .info-banner h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .info-banner p {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.95em;
+        }
+
+        @keyframes diceRoll {
+            0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
+            25% { transform: rotateY(90deg) rotateX(90deg); }
+            50% { transform: rotateY(180deg) rotateX(180deg); }
+            75% { transform: rotateY(270deg) rotateX(270deg); }
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-50px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .hidden { display: none !important; }
+        
+        @media (max-width: 968px) {
+            .lobby-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .players-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+                letter-spacing: 3px;
+                margin: 20px 0 30px;
+            }
+            
+            .mode-grid {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .menu button, .main-btn {
+                font-size: 1.3em;
+                padding: 20px 35px;
+                min-width: 200px;
+            }
+            
+            .lobby-section {
+                padding: 20px;
+            }
+            
+            .lobby-section h2 {
+                font-size: 1.5em;
+            }
+            
+            .form-group input, .form-group select {
+                font-size: 16px; /* Предотвращает зум на iOS */
+            }
+            
+            .info-banner {
+                font-size: 0.9em;
+                padding: 15px;
+            }
+            
+            .dice {
+                font-size: 4em;
+            }
+            
+            .player-name {
+                font-size: 1.5em;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            .menu button, .main-btn {
+                font-size: 1.1em;
+                padding: 15px 25px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,215,0,0.5);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,215,0,0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Игра в кости 🎲</h1>
+        
+        <!-- ГЛАВНОЕ МЕНЮ -->
+        <div id="menu" class="menu">
+            <div class="mode-grid">
+                <button onclick="startLocalGame('friend')">👥 Игра с другом</button>
+                <button onclick="startLocalGame('bot')">🤖 Игра с ботом</button>
+                <button onclick="showLobbyScreen()">🌐 Онлайн игра</button>
+            </div>
+        </div>
+
+        <!-- ЭКРАН ЛОББИ -->
+        <div id="lobby-screen" class="lobby-screen">
+            <div class="info-banner">
+                <h3>🌐 Как играть по сети:</h3>
+                <p>1. Создайте лобби и дождитесь других игроков<br>
+                2. Другие игроки могут подключиться с любого устройства в вашей сети<br>
+                3. Для локальной сети используйте IP адрес показанный при запуске сервера</p>
+            </div>
+            
+            <div class="lobby-container">
+                <!-- СОЗДАТЬ ЛОББИ -->
+                <div class="lobby-section">
+                    <h2>🎮 Создать лобби</h2>
+                    <form id="create-lobby-form" onsubmit="createLobby(event)">
+                        <div class="form-group">
+                            <label>Ваше имя:</label>
+                            <input type="text" id="host-name" placeholder="Введите имя" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Количество игроков:</label>
+                            <select id="max-players">
+                                <option value="2">2 игрока</option>
+                                <option value="3">3 игрока</option>
+                                <option value="4">4 игрока</option>
+                                <option value="5">5 игроков</option>
+                                <option value="6">6 игроков</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Количество костей:</label>
+                            <select id="dice-count">
+                                <option value="1">1 кость</option>
+                                <option value="2">2 кости</option>
+                                <option value="3">3 кости</option>
+                                <option value="4">4 кости</option>
+                                <option value="5">5 костей</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Очков до победы:</label>
+                            <select id="win-score">
+                                <option value="1">1 раунд</option>
+                                <option value="3">3 раунда</option>
+                                <option value="5" selected>5 раундов</option>
+                                <option value="7">7 раундов</option>
+                                <option value="10">10 раундов</option>
+                            </select>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="is-private" onchange="togglePassword()">
+                            <label for="is-private">Закрытое лобби (с паролем)</label>
+                        </div>
+                        
+                        <div class="form-group password-field" id="password-field">
+                            <label>Пароль:</label>
+                            <input type="text" id="lobby-password" placeholder="Введите пароль">
+                        </div>
+                        
+                        <button type="submit" class="main-btn" style="width: 100%; margin-top: 20px;">
+                            Создать лобби
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- СПИСОК ЛОББИ -->
+                <div class="lobby-section">
+                    <h2>🎯 Доступные лобби</h2>
+                    <div class="lobby-list" id="lobbies-list">
+                        <div class="empty-lobbies">
+                            <p>⏳ Загрузка лобби...</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 20px;" onclick="refreshLobbies()">
+                        🔄 Обновить список
+                    </button>
+                </div>
+            </div>
+            
+            <div class="game-buttons">
+                <button class="btn btn-secondary" onclick="backToMenu()">🏠 В меню</button>
+            </div>
+        </div>
+
+        <!-- КОМНАТА ОЖИДАНИЯ -->
+        <div id="waiting-room" class="waiting-room">
+            <h2 class="waiting-title">⏳ Комната ожидания</h2>
+            
+            <div class="lobby-code">
+                <div class="lobby-code-label">Код лобби:</div>
+                <div class="lobby-code-value" id="lobby-code-display">XXXX</div>
+            </div>
+            
+            <div class="lobby-info">
+                <h3>Настройки игры</h3>
+                <div class="lobby-details-grid">
+                    <div class="lobby-detail-item">
+                        <div class="lobby-detail-label">Игроков</div>
+                        <div class="lobby-detail-value"><span id="waiting-current-players">0</span>/<span id="waiting-max-players">0</span></div>
+                    </div>
+                    <div class="lobby-detail-item">
+                        <div class="lobby-detail-label">Костей</div>
+                        <div class="lobby-detail-value" id="waiting-dice-count">1</div>
+                    </div>
+                    <div class="lobby-detail-item">
+                        <div class="lobby-detail-label">До победы</div>
+                        <div class="lobby-detail-value" id="waiting-win-score">5</div>
+                    </div>
+                    <div class="lobby-detail-item">
+                        <div class="lobby-detail-label">Тип лобби</div>
+                        <div class="lobby-detail-value" id="waiting-lobby-type">🔓</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="waiting-status" id="waiting-status">
+                Ожидаем присоединения игроков...
+            </div>
+            
+            <div class="players-waiting" id="players-waiting-list"></div>
+            
+            <div class="game-buttons">
+                <button class="btn btn-primary" id="start-game-btn" onclick="startOnlineGame()" style="display: none;">
+                    🎮 Начать игру
+                </button>
+                <button class="btn btn-secondary" onclick="leaveLobby()">🚪 Покинуть лобби</button>
+            </div>
+        </div>
+
+        <!-- ИГРОВОЙ ЭКРАН ОНЛАЙН -->
+        <div id="game-screen" class="game-screen">
+            <div class="game-info">
+                <div class="game-info-item">
+                    <div class="game-info-label">Раунд</div>
+                    <div class="game-info-value" id="current-round">1</div>
+                </div>
+                <div class="game-info-item">
+                    <div class="game-info-label">До победы</div>
+                    <div class="game-info-value" id="win-score-display">5</div>
+                </div>
+                <div class="game-info-item">
+                    <div class="game-info-label">Костей</div>
+                    <div class="game-info-value" id="dice-count-display">1</div>
+                </div>
+            </div>
+            
+            <div class="players-grid" id="players-grid"></div>
+            
+            <div class="winner-announcement" id="winner-announcement"></div>
+            
+            <div class="game-buttons">
+                <button class="btn btn-primary" id="next-round-btn" onclick="nextRound()" style="display: none;">
+                    ▶️ Следующий раунд
+                </button>
+                <button class="btn btn-secondary" onclick="endGame()">🏠 Завершить игру</button>
+            </div>
+        </div>
+
+        <!-- ЛОКАЛЬНАЯ ИГРА -->
+        <div id="local-game" class="game-screen">
+            <div class="players-grid">
+                <div class="player-card">
+                    <h2 class="player-name">Игрок 1</h2>
+                    <div class="dice-container">
+                        <div class="dice" id="local-dice1">⚀</div>
+                    </div>
+                    <button id="local-roll1" class="roll-btn" onclick="rollLocalDice(1)">Бросить кость</button>
+                </div>
+                <div class="player-card">
+                    <h2 class="player-name" id="local-player2-title">Игрок 2</h2>
+                    <div class="dice-container">
+                        <div class="dice" id="local-dice2">⚀</div>
+                    </div>
+                    <button id="local-roll2" class="roll-btn hidden" onclick="rollLocalDice(2)">Бросить кость</button>
+                </div>
+            </div>
+            
+            <div class="winner-announcement" id="local-winner"></div>
+            <div class="game-buttons hidden" id="local-game-buttons">
+                <button class="btn btn-primary" onclick="newLocalRound()">🔄 Новый раунд</button>
+                <button class="btn btn-secondary" onclick="backToMenu()">🏠 В меню</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+        let gameMode = '';
+        let localPlayer1Dice = 0;
+        let localPlayer2Dice = 0;
+        let currentLobby = null;
+        let currentPlayerId = null;
+        let isHost = false;
+        let pollingInterval = null;
+
+        // ЛОКАЛЬНАЯ ИГРА
+        function startLocalGame(mode) {
+            gameMode = mode;
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('local-game').style.display = 'block';
+            document.getElementById('local-player2-title').textContent = mode === 'bot' ? '🤖 Бот' : '👥 Игрок 2';
+            resetLocalGame();
+            
+            if (gameMode === 'friend') {
+                document.getElementById('local-roll1').classList.remove('hidden');
+                document.getElementById('local-roll2').classList.remove('hidden');
+                document.getElementById('local-roll1').disabled = false;
+                document.getElementById('local-roll2').disabled = false;
+            } else {
+                document.getElementById('local-roll1').classList.remove('hidden');
+                document.getElementById('local-roll1').disabled = false;
+                document.getElementById('local-roll2').classList.add('hidden');
+            }
+        }
+
+        async function rollLocalDice(player) {
+            const diceElement = document.getElementById(`local-dice${player}`);
+            const rollBtn = document.getElementById(`local-roll${player}`);
+            rollBtn.disabled = true;
+            diceElement.classList.add('animate');
+            
+            const response = await fetch('/roll');
+            const data = await response.json();
+            
+            if (player === 1) {
+                localPlayer1Dice = data.dice;
+                document.getElementById('local-dice1').textContent = getDiceEmoji(localPlayer1Dice);
+            } else {
+                localPlayer2Dice = data.dice;
+                document.getElementById('local-dice2').textContent = getDiceEmoji(localPlayer2Dice);
+            }
+            
+            setTimeout(() => {
+                diceElement.classList.remove('animate');
+                
+                if (gameMode === 'bot' && player === 1 && localPlayer1Dice > 0 && localPlayer2Dice === 0) {
+                    setTimeout(() => botRoll(), 800);
+                }
+                
+                if (localPlayer1Dice > 0 && localPlayer2Dice > 0) {
+                    setTimeout(showLocalWinner, 500);
+                }
+            }, 900);
+        }
+
+        async function botRoll() {
+            const diceElement = document.getElementById('local-dice2');
+            diceElement.classList.add('animate');
+            
+            const response = await fetch('/roll');
+            const data = await response.json();
+            localPlayer2Dice = data.dice;
+            document.getElementById('local-dice2').textContent = getDiceEmoji(localPlayer2Dice);
+            
+            setTimeout(() => {
+                diceElement.classList.remove('animate');
+                showLocalWinner();
+            }, 900);
+        }
+
+        function showLocalWinner() {
+            let result = localPlayer1Dice > localPlayer2Dice ? 'Игрок 1 победил! 🎉' :
+                        localPlayer2Dice > localPlayer1Dice ? (gameMode === 'bot' ? 'Бот победил! 🤖' : 'Игрок 2 победил! 🎉') :
+                        'Ничья! 🤝';
+            document.getElementById('local-winner').textContent = result;
+            document.getElementById('local-winner').style.display = 'block';
+            document.getElementById('local-game-buttons').classList.remove('hidden');
+        }
+
+        function newLocalRound() {
+            resetLocalGame();
+            document.getElementById('local-winner').style.display = 'none';
+            document.getElementById('local-game-buttons').classList.add('hidden');
+            
+            if (gameMode === 'friend') {
+                document.getElementById('local-roll1').disabled = false;
+                document.getElementById('local-roll2').disabled = false;
+            } else {
+                document.getElementById('local-roll1').disabled = false;
+                document.getElementById('local-roll2').classList.add('hidden');
+            }
+        }
+
+        function resetLocalGame() {
+            localPlayer1Dice = 0;
+            localPlayer2Dice = 0;
+            document.getElementById('local-dice1').textContent = '⚀';
+            document.getElementById('local-dice2').textContent = '⚀';
+        }
+
+        // ОНЛАЙН ИГРА
+        function showLobbyScreen() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'block';
+            refreshLobbies();
+        }
+
+        function togglePassword() {
+            const isPrivate = document.getElementById('is-private').checked;
+            document.getElementById('password-field').style.display = isPrivate ? 'block' : 'none';
+        }
+
+        async function createLobby(event) {
+            event.preventDefault();
+            
+            const hostName = document.getElementById('host-name').value;
+            const maxPlayers = parseInt(document.getElementById('max-players').value);
+            const diceCount = parseInt(document.getElementById('dice-count').value);
+            const winScore = parseInt(document.getElementById('win-score').value);
+            const isPrivate = document.getElementById('is-private').checked;
+            const password = isPrivate ? document.getElementById('lobby-password').value : '';
+            
+            try {
+                const response = await fetch('/create-lobby', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        host_name: hostName,
+                        max_players: maxPlayers,
+                        dice_count: diceCount,
+                        win_score: winScore,
+                        is_private: isPrivate,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentLobby = data.lobby;
+                    currentPlayerId = data.player_id; // Используем ID от сервера
+                    isHost = true;
+                    
+                    // Переходим в комнату ожидания
+                    showWaitingRoom();
+                    
+                    // Запускаем опрос сервера для обновления списка игроков
+                    startPolling(data.lobby_id);
+                }
+            } catch (error) {
+                alert('❌ Ошибка при создании лобби: ' + error.message);
+            }
+        }
+
+        async function refreshLobbies() {
+            try {
+                const response = await fetch('/lobbies');
+                const data = await response.json();
+                
+                const lobbiesList = document.getElementById('lobbies-list');
+                
+                if (Object.keys(data.lobbies).length === 0) {
+                    lobbiesList.innerHTML = '<div class="empty-lobbies"><p>😔 Нет доступных лобби</p><p style="font-size: 0.9em; margin-top: 10px;">Создайте своё лобби!</p></div>';
+                } else {
+                    lobbiesList.innerHTML = '';
+                    
+                    for (const [id, lobby] of Object.entries(data.lobbies)) {
+                        const lobbyItem = document.createElement('div');
+                        lobbyItem.className = 'lobby-item';
+                        lobbyItem.onclick = () => joinLobby(id, lobby.is_private);
+                        
+                        lobbyItem.innerHTML = `
+                            <div class="lobby-item-header">
+                                <div class="lobby-host">🎮 ${lobby.host}</div>
+                                <div class="lobby-players">${lobby.current_players}/${lobby.max_players} 👥</div>
+                            </div>
+                            <div class="lobby-details">
+                                <span>🎲 ${lobby.dice_count} ${lobby.dice_count === 1 ? 'кость' : 'кости'}</span>
+                                <span>🏆 До ${lobby.win_score}</span>
+                                ${lobby.is_private ? '<span>🔒 Закрытое</span>' : '<span>🔓 Открытое</span>'}
+                            </div>
+                        `;
+                        
+                        lobbiesList.appendChild(lobbyItem);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке лобби:', error);
+            }
+        }
+
+        async function joinLobby(lobbyId, isPrivate) {
+            let password = '';
+            let playerName = prompt('Введите ваше имя:');
+            
+            if (!playerName) return;
+            
+            if (isPrivate) {
+                password = prompt('Это закрытое лобби. Введите пароль:');
+                if (!password) return;
+            }
+            
+            try {
+                const response = await fetch('/join-lobby', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lobby_id: lobbyId,
+                        player_name: playerName,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentLobby = data.lobby;
+                    currentPlayerId = data.player_id;
+                    isHost = false;
+                    
+                    // Переходим в комнату ожидания
+                    showWaitingRoom();
+                    
+                    // Запускаем опрос сервера
+                    startPolling(lobbyId);
+                } else {
+                    alert('❌ Ошибка: ' + data.error);
+                }
+            } catch (error) {
+                alert('❌ Ошибка подключения: ' + error.message);
+            }
+        }
+
+        function backToMenu() {
+            document.getElementById('menu').style.display = 'block';
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('waiting-room').style.display = 'none';
+            document.getElementById('local-game').style.display = 'none';
+            gameMode = '';
+            
+            // Останавливаем polling
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            
+            // Очищаем данные лобби
+            currentLobby = null;
+            currentPlayerId = null;
+            isHost = false;
+        }
+        
+        // КОМНАТА ОЖИДАНИЯ
+        function showWaitingRoom() {
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('waiting-room').style.display = 'block';
+            
+            // Заполняем информацию о лобби
+            document.getElementById('lobby-code-display').textContent = currentLobby.id;
+            document.getElementById('waiting-max-players').textContent = currentLobby.max_players;
+            document.getElementById('waiting-dice-count').textContent = currentLobby.dice_count;
+            document.getElementById('waiting-win-score').textContent = currentLobby.win_score;
+            document.getElementById('waiting-lobby-type').textContent = currentLobby.is_private ? '🔒 Закрытое' : '🔓 Открытое';
+            
+            updateWaitingRoom();
+        }
+        
+        function updateWaitingRoom() {
+            const playersList = document.getElementById('players-waiting-list');
+            const currentPlayers = document.getElementById('waiting-current-players');
+            const statusElement = document.getElementById('waiting-status');
+            const startBtn = document.getElementById('start-game-btn');
+            
+            playersList.innerHTML = '';
+            currentPlayers.textContent = currentLobby.players.length;
+            
+            // Отображаем всех игроков
+            currentLobby.players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'waiting-player';
+                if (player.is_host || index === 0) {
+                    playerDiv.classList.add('host');
+                }
+                
+                playerDiv.innerHTML = `
+                    <div class="waiting-player-icon">${player.is_host || index === 0 ? '👑' : '🎮'}</div>
+                    <div class="waiting-player-name">${player.name}</div>
+                    ${player.is_host || index === 0 ? '<div class="host-badge">Хост</div>' : ''}
+                `;
+                playersList.appendChild(playerDiv);
+            });
+            
+            // Обновляем статус
+            const minPlayers = 2;
+            if (currentLobby.players.length < minPlayers) {
+                statusElement.textContent = `Ожидаем ещё ${minPlayers - currentLobby.players.length} игроков...`;
+                statusElement.className = 'waiting-status';
+            } else if (currentLobby.players.length >= currentLobby.max_players) {
+                statusElement.textContent = '✅ Лобби заполнено! Хост может начать игру.';
+                statusElement.className = 'waiting-status ready';
+            } else {
+                statusElement.textContent = `✅ Можно начинать! (${currentLobby.players.length}/${currentLobby.max_players} игроков)`;
+                statusElement.className = 'waiting-status ready';
+            }
+            
+            // Показываем кнопку старта только хосту и только если минимум 2 игрока
+            if (isHost && currentLobby.players.length >= minPlayers) {
+                startBtn.style.display = 'inline-block';
+            } else {
+                startBtn.style.display = 'none';
+            }
+        }
+        
+        function startPolling(lobbyId) {
+            // Останавливаем предыдущий polling если есть
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            // Опрашиваем сервер каждые 2 секунды
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/lobby-status/${lobbyId}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.lobby) {
+                        const oldPlayerCount = currentLobby.players.length;
+                        currentLobby = data.lobby;
+                        
+                        // Обновляем комнату ожидания
+                        if (document.getElementById('waiting-room').style.display === 'block') {
+                            updateWaitingRoom();
+                            
+                            // Показываем уведомление о новом игроке
+                            if (data.lobby.players.length > oldPlayerCount) {
+                                const newPlayer = data.lobby.players[data.lobby.players.length - 1];
+                                showNotification(`✅ ${newPlayer.name} присоединился к игре!`);
+                            }
+                        }
+                        
+                        // Проверяем начало игры
+                        if (data.lobby.status === 'playing') {
+                            stopPolling();
+                            startGameSession();
+                        }
+                    } else if (data.error === 'Лобби не найдено') {
+                        // Лобби удалено
+                        stopPolling();
+                        alert('❌ Лобби было закрыто');
+                        backToMenu();
+                    }
+                } catch (error) {
+                    console.error('Ошибка polling:', error);
+                }
+            }, 2000);
+        }
+        
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+        
+        function showNotification(message) {
+            // Простое уведомление через временный элемент
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(0, 212, 170, 0.9);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 12px;
+                font-size: 1.1em;
+                font-weight: bold;
+                z-index: 10000;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        async function startOnlineGame() {
+            if (!isHost) return;
+            
+            try {
+                const response = await fetch('/start-game', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lobby_id: currentLobby.id
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentLobby.status = 'playing';
+                    stopPolling();
+                    startGameSession();
+                }
+            } catch (error) {
+                alert('❌ Ошибка при запуске игры: ' + error.message);
+            }
+        }
+        
+        function startGameSession() {
+            // Показываем игровой экран
+            document.getElementById('waiting-room').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            
+            // Заполняем информацию об игре
+            document.getElementById('current-round').textContent = '1';
+            document.getElementById('win-score-display').textContent = currentLobby.win_score;
+            document.getElementById('dice-count-display').textContent = currentLobby.dice_count;
+            
+            // Рендерим игроков
+            renderGamePlayers();
+            
+            // Продолжаем polling для синхронизации
+            if (!pollingInterval) {
+                startGamePolling(currentLobby.id);
+            }
+        }
+        
+        function renderGamePlayers() {
+            const playersGrid = document.getElementById('players-grid');
+            playersGrid.innerHTML = '';
+            
+            currentLobby.players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card';
+                playerCard.id = `player-card-${player.id}`;
+                
+                // Создаем кости
+                let diceHTML = '';
+                for (let i = 0; i < currentLobby.dice_count; i++) {
+                    diceHTML += `<div class="dice" id="dice-${player.id}-${i}">⚀</div>`;
+                }
+                
+                playerCard.innerHTML = `
+                    <div class="player-name">${player.name} ${player.is_host ? '👑' : ''}</div>
+                    <div class="player-score">Очки: <span id="score-${player.id}">0</span></div>
+                    <div class="dice-container" id="dice-container-${player.id}">
+                        ${diceHTML}
+                    </div>
+                    ${player.id === currentPlayerId ? 
+                        `<button class="roll-btn" id="roll-btn-${player.id}" onclick="rollOnlineDice()">🎲 Бросить кости</button>` : 
+                        '<div class="waiting-text" id="waiting-${player.id}">Ожидает...</div>'}
+                `;
+                
+                playersGrid.appendChild(playerCard);
+            });
+        }
+        
+        async function rollOnlineDice() {
+            const rollBtn = document.getElementById(`roll-btn-${currentPlayerId}`);
+            if (!rollBtn || rollBtn.disabled) return;
+            
+            rollBtn.disabled = true;
+            rollBtn.textContent = '🎲 Бросаю...';
+            
+            // Анимируем кости
+            for (let i = 0; i < currentLobby.dice_count; i++) {
+                const dice = document.getElementById(`dice-${currentPlayerId}-${i}`);
+                if (dice) dice.classList.add('animate');
+            }
+            
+            try {
+                const response = await fetch('/roll-dice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lobby_id: currentLobby.id,
+                        player_id: currentPlayerId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Отображаем результаты
+                    setTimeout(() => {
+                        data.rolls.forEach((roll, index) => {
+                            const dice = document.getElementById(`dice-${currentPlayerId}-${index}`);
+                            if (dice) {
+                                dice.classList.remove('animate');
+                                dice.textContent = getDiceEmoji(roll);
+                            }
+                        });
+                        
+                        rollBtn.textContent = `✅ Бросил (${data.total})`;
+                        
+                        // Обновляем локальное состояние
+                        if (!currentLobby.game_state.current_rolls) {
+                            currentLobby.game_state.current_rolls = {};
+                        }
+                        currentLobby.game_state.current_rolls[currentPlayerId] = {
+                            rolls: data.rolls,
+                            total: data.total
+                        };
+                        
+                        // Проверяем, все ли бросили
+                        checkRoundComplete();
+                    }, 800);
+                }
+            } catch (error) {
+                console.error('Ошибка броска:', error);
+                rollBtn.disabled = false;
+                rollBtn.textContent = '🎲 Бросить кости';
+            }
+        }
+        
+        function startGamePolling(lobbyId) {
+            // Останавливаем предыдущий polling
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            // Опрашиваем сервер каждую секунду во время игры
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/game-state/${lobbyId}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.lobby) {
+                        updateGameState(data.lobby);
+                    }
+                } catch (error) {
+                    console.error('Ошибка game polling:', error);
+                }
+            }, 1000);
+        }
+        
+        function updateGameState(newLobby) {
+            const oldLobby = currentLobby;
+            currentLobby = newLobby;
+            
+            // Обновляем раунд
+            document.getElementById('current-round').textContent = currentLobby.game_state.current_round + 1;
+            
+            // Обновляем очки всех игроков
+            currentLobby.players.forEach(player => {
+                const scoreElement = document.getElementById(`score-${player.id}`);
+                if (scoreElement) {
+                    scoreElement.textContent = currentLobby.game_state.player_scores[player.id] || 0;
+                }
+            });
+            
+            // Обновляем броски других игроков
+            if (currentLobby.game_state.current_rolls) {
+                Object.keys(currentLobby.game_state.current_rolls).forEach(playerId => {
+                    if (playerId !== currentPlayerId) {
+                        const rollData = currentLobby.game_state.current_rolls[playerId];
+                        
+                        rollData.rolls.forEach((roll, index) => {
+                            const dice = document.getElementById(`dice-${playerId}-${index}`);
+                            if (dice) {
+                                dice.textContent = getDiceEmoji(roll);
+                            }
+                        });
+                        
+                        const waitingText = document.getElementById(`waiting-${playerId}`);
+                        if (waitingText) {
+                            waitingText.textContent = `Бросил (${rollData.total})`;
+                            waitingText.style.color = '#00d4aa';
+                            waitingText.style.fontWeight = 'bold';
+                        }
+                    }
+                });
+            }
+            
+            // Проверяем завершение раунда
+            if (currentLobby.game_state.round_complete && !oldLobby.game_state.round_complete) {
+                showRoundResults();
+            }
+            
+            // Проверяем победителя игры
+            if (currentLobby.game_state.game_winner) {
+                showGameWinner();
+            }
+        }
+        
+        function checkRoundComplete() {
+            const allRolled = currentLobby.players.every(player => 
+                currentLobby.game_state.current_rolls && 
+                currentLobby.game_state.current_rolls[player.id]
+            );
+            
+            if (allRolled) {
+                // Автоматически завершаем раунд через 2 секунды
+                setTimeout(() => {
+                    completeRound();
+                }, 2000);
+            }
+        }
+        
+        async function completeRound() {
+            try {
+                const response = await fetch('/complete-round', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lobby_id: currentLobby.id
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentLobby = data.lobby;
+                    showRoundResults();
+                }
+            } catch (error) {
+                console.error('Ошибка завершения раунда:', error);
+            }
+        }
+        
+        function showRoundResults() {
+            const roundWinnerId = currentLobby.game_state.round_winner;
+            
+            if (!roundWinnerId) return;
+            
+            // Подсвечиваем победителя раунда
+            currentLobby.players.forEach(player => {
+                const card = document.getElementById(`player-card-${player.id}`);
+                if (card) {
+                    card.classList.remove('winner', 'active');
+                    if (player.id === roundWinnerId) {
+                        card.classList.add('winner');
+                    }
+                }
+            });
+            
+            const winner = currentLobby.players.find(p => p.id === roundWinnerId);
+            const winnerName = winner ? winner.name : 'Игрок';
+            
+            // Показываем объявление
+            const announcement = document.getElementById('winner-announcement');
+            announcement.textContent = `🎉 ${winnerName} выиграл раунд!`;
+            announcement.style.display = 'block';
+            
+            // Проверяем победителя игры
+            if (currentLobby.game_state.game_winner) {
+                setTimeout(() => {
+                    showGameWinner();
+                }, 2000);
+            } else {
+                // Показываем кнопку следующего раунда
+                setTimeout(() => {
+                    document.getElementById('next-round-btn').style.display = 'inline-block';
+                }, 2000);
+            }
+        }
+        
+        function showGameWinner() {
+            stopPolling();
+            
+            const winnerId = currentLobby.game_state.game_winner;
+            const winner = currentLobby.players.find(p => p.id === winnerId);
+            const winnerName = winner ? winner.name : 'Игрок';
+            
+            // Подсвечиваем победителя
+            currentLobby.players.forEach(player => {
+                const card = document.getElementById(`player-card-${player.id}`);
+                if (card) {
+                    card.classList.remove('winner', 'active');
+                    if (player.id === winnerId) {
+                        card.classList.add('winner');
+                    }
+                }
+            });
+            
+            const announcement = document.getElementById('winner-announcement');
+            announcement.textContent = `🏆 ${winnerName} ВЫИГРАЛ ИГРУ! 🏆`;
+            announcement.style.display = 'block';
+            
+            // Скрываем кнопку следующего раунда
+            document.getElementById('next-round-btn').style.display = 'none';
+            
+            // Показываем конфетти эффект
+            showConfetti();
+        }
+        
+        function showConfetti() {
+            // Простой эффект конфетти
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.textContent = ['🎉', '🎊', '⭐', '✨', '🏆'][Math.floor(Math.random() * 5)];
+                    confetti.style.cssText = `
+                        position: fixed;
+                        top: -50px;
+                        left: ${Math.random() * 100}vw;
+                        font-size: 2em;
+                        z-index: 10000;
+                        pointer-events: none;
+                        animation: confettiFall ${2 + Math.random() * 2}s linear forwards;
+                    `;
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 50);
+            }
+        }
+        
+        async function nextRound() {
+            try {
+                const response = await fetch('/next-round', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lobby_id: currentLobby.id
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentLobby = data.lobby;
+                    
+                    // Сбрасываем UI
+                    document.getElementById('winner-announcement').style.display = 'none';
+                    document.getElementById('next-round-btn').style.display = 'none';
+                    
+                    // Обновляем раунд
+                    document.getElementById('current-round').textContent = currentLobby.game_state.current_round + 1;
+                    
+                    // Сбрасываем кости и кнопки
+                    currentLobby.players.forEach(player => {
+                        // Сбрасываем кости
+                        for (let i = 0; i < currentLobby.dice_count; i++) {
+                            const dice = document.getElementById(`dice-${player.id}-${i}`);
+                            if (dice) {
+                                dice.textContent = '⚀';
+                            }
+                        }
+                        
+                        // Убираем подсветку
+                        const card = document.getElementById(`player-card-${player.id}`);
+                        if (card) {
+                            card.classList.remove('winner', 'active');
+                        }
+                        
+                        // Сбрасываем кнопку
+                        if (player.id === currentPlayerId) {
+                            const rollBtn = document.getElementById(`roll-btn-${player.id}`);
+                            if (rollBtn) {
+                                rollBtn.disabled = false;
+                                rollBtn.textContent = '🎲 Бросить кости';
+                            }
+                        } else {
+                            const waitingText = document.getElementById(`waiting-${player.id}`);
+                            if (waitingText) {
+                                waitingText.textContent = 'Ожидает...';
+                                waitingText.style.color = '';
+                                waitingText.style.fontWeight = '';
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Ошибка начала нового раунда:', error);
+            }
+        }
+        
+        function endGame() {
+            if (confirm('Вы уверены что хотите завершить игру?')) {
+                stopPolling();
+                backToMenu();
+            }
+        }
+        
+        function leaveLobby() {
+            if (confirm('Вы уверены что хотите покинуть лобби?')) {
+                stopPolling();
+                backToMenu();
+            }
+        }
+
+        function getDiceEmoji(num) {
+            const emojis = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+            return emojis[num-1];
+        }
+
+        // Автообновление списка лобби каждые 5 секунд
+        setInterval(() => {
+            if (document.getElementById('lobby-screen').style.display === 'block') {
+                refreshLobbies();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
