@@ -1,0 +1,31 @@
+# Секреты — НИКОГДА не загружай на GitHub
+.env
+
+# Виртуальное окружение Python
+venv/
+env/
+.venv/
+
+# Python кэш
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# База данных (локальная)
+*.db
+*.sqlite3
+
+# Загруженные файлы
+uploads/
+
+# MacOS
+.DS_Store
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Логи
+*.log
