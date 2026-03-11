@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow — Войти</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="auth-page">
+
+  <div class="auth-container">
+
+    <!-- Логотип -->
+    <div class="auth-logo">
+      <span class="logo-icon">✅</span>
+      <h1>TaskFlow</h1>
+      <p>Корпоративный менеджер задач</p>
+    </div>
+
+    <!-- Переключатель вкладок (только для login/register) -->
+    <div class="tab-switcher" id="main-tabs">
+      <button class="tab-btn active" onclick="switchTab('login')">Войти</button>
+      <button class="tab-btn" onclick="switchTab('register')">Регистрация</button>
+    </div>
+
+    <!-- ──── ВХОД ──── -->
+    <div id="login-tab" class="tab-content active">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" onclick="login()">Войти в систему</button>
+      <p class="link-text">
+        <a href="#" onclick="switchTab('forgot')">Забыли пароль?</a>
+      </p>
+    </div>
+
+    <!-- ──── РЕГИСТРАЦИЯ ──── -->
+    <div id="register-tab" class="tab-content">
+      <div class="form-group">
+        <label>ФИО *</label>
+        <input type="text" id="reg-name" placeholder="Иванов Иван Иванович">
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="reg-email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>Номер телефона *</label>
+        <input type="tel" id="reg-phone" placeholder="+7 (999) 123-45-67">
+      </div>
+      <div class="form-group">
+        <label>Дата рождения *</label>
+        <input type="date" id="reg-birth">
+      </div>
+      <div class="form-group">
+        <label>Должность *</label>
+        <input type="text" id="reg-position" placeholder="Например: Менеджер по продажам">
+      </div>
+      <div class="form-group">
+        <label>Роль в системе *</label>
+        <select id="reg-role">
+          <option value="employee">👤 Сотрудник</option>
+          <option value="manager">📋 Менеджер</option>
+          <option value="reviewer">✅ Проверяющий</option>
+          <option value="boss">👑 Руководитель / Начальник</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Пароль * (минимум 8 символов)</label>
+        <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password">
+      </div>
+      <button class="btn-primary" onclick="register()">Создать аккаунт</button>
+    </div>
+
+    <!-- ──── ВОССТАНОВЛЕНИЕ ПАРОЛЯ ──── -->
+    <div id="forgot-tab" class="tab-content">
+      <h3 style="margin-bottom:12px; color:var(--dark); font-size:18px;">Восстановление пароля</h3>
+      <p class="hint-text">
+        Введите ваш email или номер телефона — мы отправим ссылку для сброса пароля.
+      </p>
+      <div class="form-group">
+        <label>Email или телефон</label>
+        <input type="text" id="forgot-contact" placeholder="your@email.com или +79991234567">
+      </div>
+      <button class="btn-primary" onclick="forgotPassword()">Отправить инструкции</button>
+      <p class="link-text">
+        <a href="#" onclick="switchTab('login')">← Вернуться ко входу</a>
+      </p>
+    </div>
+
+    <!-- Сообщение об ошибке/успехе -->
+    <div id="auth-message" class="message hidden"></div>
+
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+</body>
+</html>

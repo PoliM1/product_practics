@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow — Задачи</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ════ БОКОВАЯ ПАНЕЛЬ ════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-logo">
+      <span class="logo-icon">✅</span>
+      <h2>TaskFlow</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-title">Навигация</span>
+      <a href="/dashboard" class="active">
+        <span class="nav-icon">📋</span> Задачи
+      </a>
+      <a href="/profile">
+        <span class="nav-icon">👤</span> Профиль
+      </a>
+      <a href="/organization">
+        <span class="nav-icon">🏢</span> Моя организация
+      </a>
+      <a href="#" onclick="showInvitationsModal()">
+        <span class="nav-icon">📨</span> Приглашения
+        <span class="nav-badge hidden" id="inv-badge">0</span>
+      </a>
+
+      <span class="sidebar-section-title" style="margin-top:16px;">Организации</span>
+      <a href="#" onclick="showCreateOrgModal()">
+        <span class="nav-icon">➕</span> Создать орг.
+      </a>
+      <a href="#" onclick="showInviteModal()">
+        <span class="nav-icon">📬</span> Пригласить
+      </a>
+      <a href="#" onclick="logout()" style="margin-top: auto;">
+        <span class="nav-icon">🚪</span> Выйти
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sb-avatar">?</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sb-name">Загрузка...</div>
+        <div class="sidebar-user-role" id="sb-role"></div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ════ ОСНОВНОЙ КОНТЕНТ ════ -->
+  <main class="main-content">
+
+    <!-- Верхняя панель -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2>Доска задач</h2>
+        <p>Все задачи вашей организации</p>
+      </div>
+      <div class="topbar-right">
+        <div class="org-select-wrap">
+          <span style="font-size:13px; color:var(--gray);">Организация:</span>
+          <select id="org-select" onchange="onOrgChange()">
+            <option value="">Выберите организацию</option>
+          </select>
+        </div>
+        <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="showCreateTaskModal()">
+          ＋ Задача
+        </button>
+      </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="stats-grid">
+      <div class="stat-card stat-pending">
+        <div class="stat-icon">🔵</div>
+        <div>
+          <div class="stat-count" id="count-pending">0</div>
+          <div class="stat-label">В ожидании</div>
+        </div>
+      </div>
+      <div class="stat-card stat-work">
+        <div class="stat-icon">🟡</div>
+        <div>
+          <div class="stat-count" id="count-work">0</div>
+          <div class="stat-label">В работе / На проверке</div>
+        </div>
+      </div>
+      <div class="stat-card stat-done">
+        <div class="stat-icon">🟢</div>
+        <div>
+          <div class="stat-count" id="count-done">0</div>
+          <div class="stat-label">Принято</div>
+        </div>
+      </div>
+      <div class="stat-card stat-rejected">
+        <div class="stat-icon">🔴</div>
+        <div>
+          <div class="stat-count" id="count-rejected">0</div>
+          <div class="stat-label">Отклонено</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kanban доска -->
+    <div class="kanban-board">
+      <div class="kanban-col col-pending">
+        <div class="col-header">
+          <div class="col-dot"></div>
+          <div class="col-title">В ожидании</div>
+          <div class="col-count" id="cnt-pending">0</div>
+        </div>
+        <div id="col-pending"></div>
+      </div>
+      <div class="kanban-col col-work">
+        <div class="col-header">
+          <div class="col-dot"></div>
+          <div class="col-title">В работе / Проверка</div>
+          <div class="col-count" id="cnt-work">0</div>
+        </div>
+        <div id="col-work"></div>
+      </div>
+      <div class="kanban-col col-done">
+        <div class="col-header">
+          <div class="col-dot"></div>
+          <div class="col-title">Принято</div>
+          <div class="col-count" id="cnt-done">0</div>
+        </div>
+        <div id="col-done"></div>
+      </div>
+      <div class="kanban-col col-rejected">
+        <div class="col-header">
+          <div class="col-dot"></div>
+          <div class="col-title">Отклонено</div>
+          <div class="col-count" id="cnt-rejected">0</div>
+        </div>
+        <div id="col-rejected"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ════ МОДАЛКИ ════ -->
+
+<!-- Просмотр задачи -->
+<div class="modal-overlay hidden" id="task-modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="m-title">Название задачи</h3>
+      <button class="modal-close" onclick="closeModal('task-modal-overlay')">✕</button>
+    </div>
+    <div class="modal-section">
+      <label>Статус</label>
+      <div id="m-status"></div>
+    </div>
+    <div class="modal-section">
+      <label>Описание</label>
+      <p id="m-desc"></p>
+    </div>
+    <div class="modal-section" id="m-assignee-section">
+      <label>Исполнитель</label>
+      <p id="m-assignee"></p>
+    </div>
+    <div class="modal-section" id="m-reviewer-section">
+      <label>Проверяющий</label>
+      <p id="m-reviewer"></p>
+    </div>
+    <div class="modal-section" id="m-deadline-section">
+      <label>Срок</label>
+      <p id="m-deadline"></p>
+    </div>
+    <div class="modal-section">
+      <label>Файлы задания</label>
+      <div id="m-task-files" class="file-list"></div>
+    </div>
+    <div class="modal-section">
+      <label>Результаты работы</label>
+      <div id="m-result-files" class="file-list"></div>
+    </div>
+    <div class="modal-section" id="m-comment-section">
+      <label>Комментарий проверяющего</label>
+      <p id="m-comment" style="color:var(--red); font-style:italic;"></p>
+    </div>
+
+    <!-- Действия -->
+    <div class="modal-actions" id="m-actions">
+      <!-- Заполняется динамически в JS -->
+    </div>
+
+    <!-- Загрузка результата -->
+    <div class="modal-section" id="upload-result-section" style="margin-top:16px;">
+      <label>Загрузить результат работы</label>
+      <div class="file-drop-zone" onclick="document.getElementById('result-file-input').click()">
+        <div class="drop-icon">📤</div>
+        <p>Нажмите чтобы выбрать файл</p>
+        <span>Word, Excel, PDF, TXT, Access</span>
+      </div>
+      <input type="file" id="result-file-input" style="display:none"
+             accept=".docx,.doc,.xlsx,.xls,.pdf,.txt,.accdb,.mdb"
+             onchange="uploadResult()">
+    </div>
+
+    <!-- Смена статуса (для проверяющего/создателя) -->
+    <div class="modal-section" id="review-actions-section" style="margin-top:8px;">
+      <label>Действие проверяющего</label>
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button class="btn-success" onclick="changeStatus('completed')">✅ Принять</button>
+        <button class="btn-danger" onclick="showRejectForm()">❌ Отклонить</button>
+      </div>
+      <div id="reject-form" class="hidden" style="margin-top:12px;">
+        <div class="form-group">
+          <label>Причина отклонения</label>
+          <textarea id="reject-comment" placeholder="Опишите что нужно исправить..."></textarea>
+        </div>
+        <button class="btn-danger" onclick="changeStatus('rejected')">Отправить отклонение</button>
+      </div>
+    </div>
+
+    <input type="hidden" id="current-task-id">
+  </div>
+</div>
+
+<!-- Создание задачи -->
+<div class="modal-overlay hidden" id="create-task-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Новая задача</h3>
+      <button class="modal-close" onclick="closeModal('create-task-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Название *</label>
+      <input type="text" id="new-task-title" placeholder="Краткое описание задачи">
+    </div>
+    <div class="form-group">
+      <label>Подробное описание</label>
+      <textarea id="new-task-desc" placeholder="Что нужно сделать, требования..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Исполнитель</label>
+      <select id="new-task-assignee">
+        <option value="">— Не назначен —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Проверяющий</label>
+      <select id="new-task-reviewer">
+        <option value="">— Не назначен —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Срок выполнения</label>
+      <input type="datetime-local" id="new-task-deadline">
+    </div>
+    <div class="form-group">
+      <label>Прикрепить файлы (задание)</label>
+      <div class="file-drop-zone" onclick="document.getElementById('task-files-input').click()">
+        <div class="drop-icon">📎</div>
+        <p>Нажмите для выбора файлов</p>
+        <span>Word, Excel, PDF, TXT, Access</span>
+      </div>
+      <input type="file" id="task-files-input" multiple style="display:none"
+             accept=".docx,.doc,.xlsx,.xls,.pdf,.txt,.accdb,.mdb"
+             onchange="updateFileList()">
+      <div id="selected-files" class="file-list"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" style="flex:1;" onclick="createTask()">Создать задачу</button>
+      <button class="btn-secondary" onclick="closeModal('create-task-modal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Создание организации -->
+<div class="modal-overlay hidden" id="create-org-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Новая организация</h3>
+      <button class="modal-close" onclick="closeModal('create-org-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Название организации *</label>
+      <input type="text" id="new-org-name" placeholder="ООО Рога и Копыта">
+    </div>
+    <div class="form-group">
+      <label>Описание</label>
+      <textarea id="new-org-desc" placeholder="Чем занимается организация..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" style="flex:1;" onclick="createOrg()">Создать</button>
+      <button class="btn-secondary" onclick="closeModal('create-org-modal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Приглашение пользователя -->
+<div class="modal-overlay hidden" id="invite-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Пригласить в организацию</h3>
+      <button class="modal-close" onclick="closeModal('invite-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Поиск пользователя (email или имя)</label>
+      <input type="text" id="invite-search" placeholder="Начните вводить..." oninput="searchUsers()">
+    </div>
+    <div id="search-results"></div>
+  </div>
+</div>
+
+<!-- Приглашения -->
+<div class="modal-overlay hidden" id="invitations-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>📨 Приглашения в организации</h3>
+      <button class="modal-close" onclick="closeModal('invitations-modal')">✕</button>
+    </div>
+    <div id="invitations-list">
+      <div class="loading"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

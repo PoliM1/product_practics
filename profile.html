@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow — Профиль</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .org-item {
+      background: var(--purple-light);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      border: 2px solid transparent;
+    }
+    .org-item:hover {
+      background: var(--purple-mid);
+      border-color: var(--purple);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.15);
+    }
+    .org-item-left { display: flex; align-items: center; gap: 14px; }
+    .org-item-icon {
+      width: 44px; height: 44px;
+      background: var(--purple);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .org-name  { font-weight: 700; color: var(--dark); font-size: 15px; }
+    .org-owner { font-size: 12px; color: var(--gray); margin-top: 2px; }
+    .org-item-right { display: flex; align-items: center; gap: 10px; }
+    .owner-badge {
+      background: var(--purple); color: white;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+    }
+    .org-arrow { color: var(--purple); font-size: 18px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">✅</span>
+      <h2>TaskFlow</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"><span class="nav-icon">📋</span> Задачи</a>
+      <a href="/profile" class="active"><span class="nav-icon">👤</span> Профиль</a>
+      <a href="/organization"><span class="nav-icon">🏢</span> Моя организация</a>
+      <a href="#" onclick="logout()"><span class="nav-icon">🚪</span> Выйти</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sb-avatar">?</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sb-name">...</div>
+        <div class="sidebar-user-role" id="sb-role"></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2>Мой профиль</h2>
+        <p>Информация об аккаунте и организациях</p>
+      </div>
+    </div>
+
+    <div id="profile-content" class="loading"></div>
+  </main>
+</div>
+
+<script>
+const API = '';
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/';
+const H = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+const ROLE_LABELS = {
+  employee: '👤 Сотрудник',
+  manager:  '📋 Менеджер',
+  reviewer: '✅ Проверяющий',
+  boss:     '👑 Руководитель',
+};
+
+function logout() { localStorage.clear(); window.location.href = '/'; }
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadProfile() {
+  const res = await fetch(API + '/users/profile', { headers: H });
+  if (!res.ok) { logout(); return; }
+  const u = await res.json();
+
+  document.getElementById('sb-avatar').textContent = u.full_name[0].toUpperCase();
+  document.getElementById('sb-name').textContent   = u.full_name;
+  document.getElementById('sb-role').textContent   = ROLE_LABELS[u.role] || u.role;
+
+  // Блок организаций — каждая кликабельна и ведёт на /organization?org=ID
+  const orgsHtml = u.organizations.length
+    ? u.organizations.map(o => `
+        <a class="org-item" href="/organization?org=${o.id}">
+          <div class="org-item-left">
+            <div class="org-item-icon">🏢</div>
+            <div>
+              <div class="org-name">${escHtml(o.name)}</div>
+              <div class="org-owner">Руководитель: ${escHtml(o.owner)}</div>
+              ${o.description ? `<div style="font-size:12px;color:var(--gray);margin-top:2px;">${escHtml(o.description)}</div>` : ''}
+            </div>
+          </div>
+          <div class="org-item-right">
+            ${o.is_owner ? '<span class="owner-badge">👑 Владелец</span>' : ''}
+            <span class="org-arrow">→</span>
+          </div>
+        </a>`).join('')
+    : `<div class="empty-state">
+         <div class="empty-icon">🏢</div>
+         <p>Вы не состоите ни в одной организации.<br>
+         Попросите руководителя пригласить вас.</p>
+       </div>`;
+
+  document.getElementById('profile-content').innerHTML = `
+    <div class="profile-card">
+
+      <!-- Шапка профиля -->
+      <div class="profile-header">
+        <div class="profile-avatar">${u.full_name[0].toUpperCase()}</div>
+        <div>
+          <div class="profile-name">${escHtml(u.full_name)}</div>
+          <div class="profile-position">${escHtml(u.position)}</div>
+          <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+            <span class="status-badge badge-pending" style="font-size:13px; padding:5px 14px;">
+              ${ROLE_LABELS[u.role] || u.role}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Детали профиля -->
+      <div class="section-title">📋 Личные данные</div>
+      <div class="profile-info" style="margin-bottom:28px;">
+        <div class="info-item">
+          <div class="info-label">📧 Email</div>
+          <div class="info-value">${escHtml(u.email)}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">📱 Телефон</div>
+          <div class="info-value">${escHtml(u.phone)}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">🎂 Дата рождения</div>
+          <div class="info-value">${u.birth_date}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">💼 Должность</div>
+          <div class="info-value">${escHtml(u.position)}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">📅 Регистрация</div>
+          <div class="info-value">${new Date(u.created_at).toLocaleDateString('ru', {day:'numeric',month:'long',year:'numeric'})}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">🆔 ID пользователя</div>
+          <div class="info-value">#${u.id}</div>
+        </div>
+      </div>
+
+      <!-- Организации — кликабельные -->
+      <div class="section-title">
+        🏢 Мои организации
+        <span style="font-size:13px;color:var(--gray);font-weight:400;">
+          — нажмите чтобы открыть
+        </span>
+      </div>
+      <div class="orgs-list">${orgsHtml}</div>
+
+    </div>
+  `;
+}
+
+loadProfile();
+</script>
+</body>
+</html>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow — Организация</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .org-cover {
+      background: linear-gradient(135deg, #1E1B4B 0%, #4C1D95 50%, #1E40AF 100%);
+      border-radius: 20px; padding: 40px; color: white;
+      margin-bottom: 24px; position: relative; overflow: hidden;
+    }
+    .org-cover::before {
+      content:''; position:absolute; top:-60px; right:-60px;
+      width:300px; height:300px; background:rgba(255,255,255,0.05); border-radius:50%;
+    }
+    .org-cover-top { display:flex; align-items:flex-start; gap:24px; position:relative; z-index:1; }
+    .org-logo {
+      width:88px; height:88px; background:rgba(255,255,255,0.15);
+      border:3px solid rgba(255,255,255,0.3); border-radius:20px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:40px; flex-shrink:0; cursor:pointer; transition:all 0.2s;
+      position:relative; overflow:hidden;
+    }
+    .org-logo img { width:100%; height:100%; object-fit:cover; border-radius:17px; }
+    .org-logo-overlay {
+      position:absolute; inset:0; background:rgba(0,0,0,0.55);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      opacity:0; transition:opacity 0.2s; border-radius:17px;
+      color:white; font-size:11px; font-weight:600; gap:4px;
+    }
+    .org-logo:hover .org-logo-overlay { opacity:1; }
+    .org-logo-overlay span { font-size:20px; }
+    .org-cover-info { flex:1; }
+    .org-cover-name { font-size:30px; font-weight:800; margin-bottom:6px; }
+    .org-cover-desc { font-size:15px; color:rgba(255,255,255,0.75); margin-bottom:16px; line-height:1.6; max-width:600px; }
+    .org-cover-meta { display:flex; gap:20px; flex-wrap:wrap; }
+    .org-meta-item { font-size:13px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px; }
+    .org-meta-item strong { color:white; }
+    .org-cover-actions { position:relative; z-index:1; display:flex; gap:10px; flex-direction:column; align-items:flex-end; }
+    .btn-cover { padding:10px 20px; border:1px solid rgba(255,255,255,0.3); color:white; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; transition:all 0.2s; white-space:nowrap; }
+    .btn-cover-edit  { background:rgba(255,255,255,0.15); }
+    .btn-cover-edit:hover  { background:rgba(255,255,255,0.25); }
+    .btn-cover-leave { background:rgba(220,38,38,0.2); border-color:rgba(220,38,38,0.4); color:#FCA5A5; }
+    .btn-cover-leave:hover { background:rgba(220,38,38,0.35); }
+    .org-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+    .org-stat-card { background:white; border-radius:16px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06); text-align:center; }
+    .org-stat-icon { font-size:28px; margin-bottom:8px; }
+    .org-stat-num  { font-size:28px; font-weight:800; color:var(--dark); }
+    .org-stat-lbl  { font-size:12px; color:var(--gray); margin-top:2px; }
+    .org-tabs { display:flex; gap:4px; background:white; padding:6px; border-radius:14px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06); width:fit-content; }
+    .org-tab-btn { padding:10px 24px; border:none; background:transparent; border-radius:10px; cursor:pointer; font-size:14px; font-weight:600; color:var(--gray); transition:all 0.2s; }
+    .org-tab-btn.active { background:var(--purple); color:white; box-shadow:0 4px 12px rgba(124,58,237,0.3); }
+    .gallery-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:14px; margin-top:16px; }
+    .gallery-item { position:relative; border-radius:14px; overflow:hidden; aspect-ratio:4/3; background:var(--light-gray); cursor:pointer; }
+    .gallery-item img { width:100%; height:100%; object-fit:cover; transition:transform 0.3s; }
+    .gallery-item:hover img { transform:scale(1.05); }
+    .gallery-item-del { position:absolute; top:8px; right:8px; background:rgba(220,38,38,0.85); color:white; border:none; width:28px; height:28px; border-radius:8px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.2s; }
+    .gallery-item:hover .gallery-item-del { opacity:1; }
+    .gallery-add-btn { border:2px dashed var(--purple-mid); border-radius:14px; aspect-ratio:4/3; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--purple-light); transition:all 0.2s; color:var(--purple); font-size:13px; font-weight:600; }
+    .gallery-add-btn:hover { border-color:var(--purple); background:var(--purple-mid); }
+    .gallery-add-btn .add-icon { font-size:32px; }
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:2000; cursor:pointer; }
+    .lightbox img { max-width:90vw; max-height:90vh; border-radius:12px; object-fit:contain; }
+    .team-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:16px; }
+    .member-card { background:white; border-radius:16px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; align-items:center; gap:16px; transition:transform 0.2s,box-shadow 0.2s; }
+    .member-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.1); }
+    .member-avatar { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; color:white; flex-shrink:0; }
+    .member-info { flex:1; min-width:0; }
+    .member-name { font-size:15px; font-weight:700; color:var(--dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .member-position { font-size:12px; color:var(--gray); margin-top:2px; }
+    .member-joined  { font-size:11px; color:var(--gray); margin-top:4px; }
+    .role-chip { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap; }
+    .role-boss     { background:#FEF9C3; color:#92400E; }
+    .role-manager  { background:var(--purple-light); color:var(--purple); }
+    .role-reviewer { background:var(--green-bg); color:var(--green); }
+    .role-employee { background:var(--light-gray); color:var(--gray); }
+    .avatar-purple { background:linear-gradient(135deg,#7C3AED,#4C1D95); }
+    .avatar-blue   { background:linear-gradient(135deg,#2563EB,#1D4ED8); }
+    .avatar-green  { background:linear-gradient(135deg,#16A34A,#15803D); }
+    .avatar-orange { background:linear-gradient(135deg,#D97706,#B45309); }
+    .avatar-sky    { background:linear-gradient(135deg,#0284C7,#0369A1); }
+    .edit-card { background:white; border-radius:16px; padding:28px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+    /* Зона загрузки логотипа */
+    .logo-upload-zone {
+      border:2px dashed var(--purple-mid); border-radius:16px; padding:28px 20px;
+      text-align:center; cursor:pointer; background:var(--purple-light);
+      transition:all 0.2s; display:flex; flex-direction:column;
+      align-items:center; gap:10px;
+    }
+    .logo-upload-zone:hover { border-color:var(--purple); background:var(--purple-mid); }
+    .logo-upload-zone .upload-icon { font-size:40px; }
+    .logo-upload-zone .upload-title { font-weight:700; color:var(--purple); font-size:15px; }
+    .logo-upload-zone .upload-hint  { font-size:12px; color:var(--gray); }
+    .logo-preview-wrap { display:flex; flex-direction:column; align-items:center; gap:10px; }
+    .logo-preview-wrap img { width:100px; height:100px; border-radius:16px; object-fit:cover; border:3px solid var(--purple-mid); }
+    .logo-change-hint { font-size:12px; color:var(--purple); font-weight:600; }
+    @media (max-width:900px) {
+      .org-stats { grid-template-columns:repeat(2,1fr); }
+      .org-cover-top { flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">✅</span>
+      <h2>TaskFlow</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-title">Навигация</span>
+      <a href="/dashboard"><span class="nav-icon">📋</span> Задачи</a>
+      <a href="/profile"><span class="nav-icon">👤</span> Профиль</a>
+      <a href="/organization" class="active"><span class="nav-icon">🏢</span> Моя организация</a>
+      <a href="#" onclick="showTeamTab()"><span class="nav-icon">👥</span> Команда</a>
+      <a href="#" onclick="logout()"><span class="nav-icon">🚪</span> Выйти</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sb-avatar">?</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sb-name">Загрузка...</div>
+        <div class="sidebar-user-role" id="sb-role"></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2>Моя организация</h2>
+        <p>Информация, галерея и команда</p>
+      </div>
+      <div class="topbar-right">
+        <div class="org-select-wrap">
+          <span style="font-size:13px;color:var(--gray);">Организация:</span>
+          <select id="org-select" onchange="loadOrg()">
+            <option value="">Выберите...</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="org-content"><div class="loading"></div></div>
+  </main>
+</div>
+
+<!-- МОДАЛКА РЕДАКТИРОВАНИЯ -->
+<div class="modal-overlay hidden" id="edit-modal">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-header">
+      <h3>✏️ Редактировать организацию</h3>
+      <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+    </div>
+
+    <!-- ЗАГРУЗКА ЛОГОТИПА -->
+    <div class="form-group">
+      <label>🖼️ Логотип организации</label>
+      <div class="logo-upload-zone" id="logo-drop-zone" onclick="document.getElementById('logo-file-input').click()">
+        <div id="logo-placeholder-block">
+          <div class="upload-icon">📷</div>
+          <div class="upload-title">Выберите файл</div>
+          <div class="upload-hint">Нажмите чтобы открыть папку с файлами<br>JPG, PNG, WEBP, GIF — до 5MB</div>
+        </div>
+        <div id="logo-preview-block" class="logo-preview-wrap hidden">
+          <img id="logo-preview-img" src="" alt="Логотип">
+          <div class="logo-change-hint">📷 Нажмите чтобы изменить</div>
+        </div>
+      </div>
+      <input type="file" id="logo-file-input" accept=".jpg,.jpeg,.png,.webp,.gif" style="display:none" onchange="previewLogo(this)">
+    </div>
+
+    <div class="form-group">
+      <label>Название организации *</label>
+      <input type="text" id="edit-name" placeholder="ООО Название">
+    </div>
+    <div class="form-group">
+      <label>Описание</label>
+      <textarea id="edit-desc" rows="4" placeholder="Чем занимается организация..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Сфера деятельности</label>
+      <input type="text" id="edit-industry" placeholder="IT, Финансы, Медицина...">
+    </div>
+    <div class="form-group">
+      <label>Город / Местонахождение</label>
+      <input type="text" id="edit-location" placeholder="Москва, Россия">
+    </div>
+    <div class="form-group">
+      <label>Сайт</label>
+      <input type="url" id="edit-website" placeholder="https://company.ru">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" style="flex:1" onclick="saveOrg()">💾 Сохранить</button>
+      <button class="btn-secondary" onclick="closeModal('edit-modal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА ВЫХОД -->
+<div class="modal-overlay hidden" id="leave-modal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h3>Выйти из организации?</h3>
+      <button class="modal-close" onclick="closeModal('leave-modal')">✕</button>
+    </div>
+    <p style="font-size:14px;color:var(--gray);margin-bottom:20px;line-height:1.6;">
+      Вы уверены что хотите покинуть <strong id="leave-org-name" style="color:var(--dark);"></strong>?
+      Вы потеряете доступ ко всем задачам.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-danger" style="flex:1" onclick="confirmLeave()">🚪 Да, выйти</button>
+      <button class="btn-secondary" onclick="closeModal('leave-modal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Лайтбокс -->
+<div class="lightbox hidden" id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<input type="hidden" id="current-org-id">
+<input type="hidden" id="current-user-id">
+<input type="hidden" id="is-owner">
+
+<script>
+const API = '';
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/';
+const H  = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+const AH = { 'Authorization': 'Bearer ' + token };
+
+const ROLE_LABELS   = { employee:'👤 Сотрудник', manager:'📋 Менеджер', reviewer:'✅ Проверяющий', boss:'👑 Руководитель' };
+const AVATAR_COLORS = ['avatar-purple','avatar-blue','avatar-green','avatar-orange','avatar-sky'];
+let orgsData = [], membersData = [], currentOrgData = null;
+
+async function init() {
+  const resMe = await fetch(API + '/auth/me', { headers: H });
+  if (!resMe.ok) { logout(); return; }
+  const me = await resMe.json();
+  document.getElementById('current-user-id').value = me.id;
+  document.getElementById('sb-avatar').textContent = me.full_name[0].toUpperCase();
+  document.getElementById('sb-name').textContent   = me.full_name;
+  document.getElementById('sb-role').textContent   = ROLE_LABELS[me.role] || me.role;
+
+  const resOrgs = await fetch(API + '/orgs/my-orgs', { headers: H });
+  if (!resOrgs.ok) return;
+  orgsData = await resOrgs.json();
+
+  const select = document.getElementById('org-select');
+  select.innerHTML = '<option value="">— Выберите —</option>';
+  orgsData.forEach(o => select.innerHTML += `<option value="${o.id}">${o.name}</option>`);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const orgIdFromUrl = urlParams.get('org');
+  if (orgIdFromUrl) { select.value = orgIdFromUrl; document.getElementById('current-org-id').value = orgIdFromUrl; }
+  else if (orgsData.length > 0) { select.value = orgsData[0].id; document.getElementById('current-org-id').value = orgsData[0].id; }
+
+  if (document.getElementById('current-org-id').value) await loadOrg();
+  else document.getElementById('org-content').innerHTML = `<div class="empty-state" style="padding:60px;"><div class="empty-icon">🏢</div><p>Вы не состоите ни в одной организации.</p><br><a href="/dashboard" class="btn-primary" style="display:inline-block;width:auto;padding:12px 24px;text-decoration:none;">На главную</a></div>`;
+}
+
+async function loadOrg() {
+  const orgId = document.getElementById('org-select').value;
+  if (!orgId) return;
+  document.getElementById('current-org-id').value = orgId;
+  document.getElementById('org-content').innerHTML = '<div class="loading"></div>';
+
+  const [resOrg, resMembers, resTasks] = await Promise.all([
+    fetch(API + `/orgs/${orgId}/info`, { headers: H }),
+    fetch(API + `/orgs/${orgId}/members`, { headers: H }),
+    fetch(API + `/tasks/org/${orgId}`, { headers: H }),
+  ]);
+  if (!resOrg.ok) { document.getElementById('org-content').innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><p>Ошибка загрузки</p></div>'; return; }
+
+  currentOrgData = await resOrg.json();
+  membersData    = await resMembers.json();
+  const tasks    = resTasks.ok ? await resTasks.json() : [];
+  const userId   = parseInt(document.getElementById('current-user-id').value);
+  const isOwner  = currentOrgData.owner_id === userId;
+  document.getElementById('is-owner').value = isOwner ? '1' : '0';
+  renderOrgPage(currentOrgData, membersData, tasks, isOwner);
+}
+
+function renderOrgPage(org, members, tasks, isOwner) {
+  const tasksDone   = tasks.filter(t => t.status === 'completed').length;
+  const tasksActive = tasks.filter(t => ['in_progress','on_review','pending'].includes(t.status)).length;
+  const gallery     = org.gallery || [];
+  const logoHtml    = org.logo_url ? `<img src="${org.logo_url}" alt="Логотип">` : '🏢';
+
+  document.getElementById('org-content').innerHTML = `
+    <div class="org-cover">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;">
+        <div class="org-cover-top" style="flex:1;">
+          <div class="org-logo" ${isOwner ? 'onclick="openEditModal()"' : ''}>
+            ${logoHtml}
+            ${isOwner ? `<div class="org-logo-overlay"><span>📷</span>Изменить</div>` : ''}
+          </div>
+          <div class="org-cover-info">
+            <div class="org-cover-name">${escHtml(org.name)}</div>
+            <div class="org-cover-desc">${org.description ? escHtml(org.description) : '<em style="opacity:0.5">Описание не добавлено</em>'}</div>
+            <div class="org-cover-meta">
+              <div class="org-meta-item">👑 <strong>${escHtml(org.owner_name)}</strong></div>
+              ${org.industry ? `<div class="org-meta-item">🏭 <strong>${escHtml(org.industry)}</strong></div>` : ''}
+              ${org.location ? `<div class="org-meta-item">📍 <strong>${escHtml(org.location)}</strong></div>` : ''}
+              ${org.website  ? `<div class="org-meta-item">🌐 <a href="${org.website}" target="_blank" style="color:rgba(255,255,255,0.8)">${escHtml(org.website)}</a></div>` : ''}
+              <div class="org-meta-item">📅 <strong>${new Date(org.created_at).toLocaleDateString('ru')}</strong></div>
+            </div>
+          </div>
+        </div>
+        <div class="org-cover-actions">
+          ${isOwner ? `<button class="btn-cover btn-cover-edit" onclick="openEditModal()">✏️ Редактировать</button>` : ''}
+          ${!isOwner ? `<button class="btn-cover btn-cover-leave" onclick="openLeaveModal()">🚪 Покинуть</button>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <div class="org-stats">
+      <div class="org-stat-card"><div class="org-stat-icon">👥</div><div class="org-stat-num">${members.length}</div><div class="org-stat-lbl">Сотрудников</div></div>
+      <div class="org-stat-card"><div class="org-stat-icon">📋</div><div class="org-stat-num">${tasks.length}</div><div class="org-stat-lbl">Всего задач</div></div>
+      <div class="org-stat-card"><div class="org-stat-icon">⚡</div><div class="org-stat-num">${tasksActive}</div><div class="org-stat-lbl">Активных</div></div>
+      <div class="org-stat-card"><div class="org-stat-icon">✅</div><div class="org-stat-num">${tasksDone}</div><div class="org-stat-lbl">Выполнено</div></div>
+    </div>
+
+    <div class="org-tabs">
+      <button class="org-tab-btn active" id="tab-info-btn"    onclick="switchOrgTab('info')">📋 Информация</button>
+      <button class="org-tab-btn"        id="tab-gallery-btn" onclick="switchOrgTab('gallery')">🖼️ Галерея (${gallery.length})</button>
+      <button class="org-tab-btn"        id="tab-team-btn"    onclick="switchOrgTab('team')">👥 Команда (${members.length})</button>
+    </div>
+
+    <div id="tab-info">
+      <div class="edit-card">
+        <div class="section-title">📋 Об организации</div>
+        <div class="profile-info">
+          <div class="info-item"><div class="info-label">🏢 Название</div><div class="info-value">${escHtml(org.name)}</div></div>
+          <div class="info-item"><div class="info-label">👑 Руководитель</div><div class="info-value">${escHtml(org.owner_name)}</div></div>
+          <div class="info-item" style="grid-column:1/-1;"><div class="info-label">📝 Описание</div><div class="info-value" style="white-space:pre-wrap;">${org.description ? escHtml(org.description) : '—'}</div></div>
+          ${org.industry ? `<div class="info-item"><div class="info-label">🏭 Сфера</div><div class="info-value">${escHtml(org.industry)}</div></div>` : ''}
+          ${org.location ? `<div class="info-item"><div class="info-label">📍 Город</div><div class="info-value">${escHtml(org.location)}</div></div>` : ''}
+          ${org.website  ? `<div class="info-item"><div class="info-label">🌐 Сайт</div><div class="info-value"><a href="${org.website}" target="_blank" style="color:var(--purple)">${escHtml(org.website)}</a></div></div>` : ''}
+          <div class="info-item"><div class="info-label">📅 Создана</div><div class="info-value">${new Date(org.created_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'})}</div></div>
+          <div class="info-item"><div class="info-label">🆔 ID</div><div class="info-value">#${org.id}</div></div>
+        </div>
+        ${isOwner ? `<div style="margin-top:20px;padding-top:20px;border-top:2px solid var(--light-gray);"><button class="btn-primary" style="width:auto;padding:12px 24px;" onclick="openEditModal()">✏️ Редактировать</button></div>` : ''}
+      </div>
+    </div>
+
+    <div id="tab-gallery" style="display:none;">
+      <div class="edit-card">
+        <div class="section-title">🖼️ Фотогалерея ${isOwner ? '<span style="font-size:13px;color:var(--gray);font-weight:400;">— нажмите + чтобы добавить</span>' : ''}</div>
+        <div class="gallery-grid" id="gallery-grid">${renderGallery(gallery, isOwner)}</div>
+        <input type="file" id="gallery-input" accept=".jpg,.jpeg,.png,.webp,.gif" multiple style="display:none" onchange="uploadGalleryImages(this)">
+      </div>
+    </div>
+
+    <div id="tab-team" style="display:none;">${renderTeam(members)}</div>
+  `;
+}
+
+function renderGallery(gallery, isOwner) {
+  let html = gallery.map(url => `
+    <div class="gallery-item" onclick="openLightbox('${url}')">
+      <img src="${url}" alt="Фото" loading="lazy">
+      ${isOwner ? `<button class="gallery-item-del" onclick="deleteGalleryImage(event,'${url}')">✕</button>` : ''}
+    </div>`).join('');
+  if (isOwner) html += `<div class="gallery-add-btn" onclick="document.getElementById('gallery-input').click()"><span class="add-icon">➕</span>Добавить фото</div>`;
+  if (!gallery.length && !isOwner) html = '<div class="empty-state"><div class="empty-icon">🖼️</div><p>Фотографий пока нет</p></div>';
+  return html;
+}
+
+async function uploadGalleryImages(input) {
+  const orgId = document.getElementById('current-org-id').value;
+  for (const file of Array.from(input.files)) {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(API + `/orgs/${orgId}/upload-gallery`, { method:'POST', headers:AH, body:fd });
+    if (!res.ok) { const d = await res.json(); alert(d.detail || 'Ошибка: ' + file.name); }
+  }
+  input.value = '';
+  await loadOrg();
+  switchOrgTab('gallery');
+}
+
+async function deleteGalleryImage(event, url) {
+  event.stopPropagation();
+  if (!confirm('Удалить это фото?')) return;
+  const orgId = document.getElementById('current-org-id').value;
+  const res = await fetch(API + `/orgs/${orgId}/gallery?url=${encodeURIComponent(url)}`, { method:'DELETE', headers:H });
+  if (res.ok) { await loadOrg(); switchOrgTab('gallery'); }
+}
+
+function openLightbox(url)  { document.getElementById('lightbox-img').src = url; document.getElementById('lightbox').classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function closeLightbox()    { document.getElementById('lightbox').classList.add('hidden'); document.body.style.overflow=''; }
+
+function switchOrgTab(tab) {
+  ['info','gallery','team'].forEach(t => {
+    const el  = document.getElementById('tab-' + t);
+    const btn = document.getElementById('tab-' + t + '-btn');
+    if (el)  el.style.display = t === tab ? '' : 'none';
+    if (btn) btn.className = 'org-tab-btn' + (t === tab ? ' active' : '');
+  });
+}
+function showTeamTab() { if (!document.getElementById('tab-team')) return; switchOrgTab('team'); document.getElementById('tab-team').scrollIntoView({behavior:'smooth'}); }
+
+function renderTeam(members) {
+  if (!members.length) return '<div class="empty-state"><div class="empty-icon">👥</div><p>Нет участников</p></div>';
+  return '<div class="team-grid">' + members.map((m,i) => `
+    <div class="member-card">
+      <div class="member-avatar ${AVATAR_COLORS[i%AVATAR_COLORS.length]}">${m.full_name[0].toUpperCase()}</div>
+      <div class="member-info">
+        <div class="member-name">${escHtml(m.full_name)}</div>
+        <div class="member-position">${escHtml(m.position)}</div>
+        <div class="member-joined">📅 ${m.joined_at ? new Date(m.joined_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'}) : '—'}</div>
+      </div>
+      <span class="role-chip role-${m.role}">${ROLE_LABELS[m.role]}</span>
+    </div>`).join('') + '</div>';
+}
+
+function openEditModal() {
+  if (document.getElementById('is-owner').value !== '1' || !currentOrgData) return;
+  document.getElementById('edit-name').value     = currentOrgData.name || '';
+  document.getElementById('edit-desc').value     = currentOrgData.description || '';
+  document.getElementById('edit-industry').value = currentOrgData.industry || '';
+  document.getElementById('edit-location').value = currentOrgData.location || '';
+  document.getElementById('edit-website').value  = currentOrgData.website  || '';
+
+  // Показываем превью текущего логотипа
+  if (currentOrgData.logo_url) {
+    document.getElementById('logo-preview-img').src = currentOrgData.logo_url;
+    document.getElementById('logo-preview-block').classList.remove('hidden');
+    document.getElementById('logo-placeholder-block').style.display = 'none';
+  } else {
+    document.getElementById('logo-preview-block').classList.add('hidden');
+    document.getElementById('logo-placeholder-block').style.display = '';
+  }
+  document.getElementById('logo-file-input').value = '';
+  openModal('edit-modal');
+}
+
+function previewLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('logo-preview-img').src = e.target.result;
+    document.getElementById('logo-preview-block').classList.remove('hidden');
+    document.getElementById('logo-placeholder-block').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveOrg() {
+  const orgId = document.getElementById('current-org-id').value;
+  const name  = document.getElementById('edit-name').value.trim();
+  if (!name) { alert('Введите название'); return; }
+
+  let logoUrl = currentOrgData?.logo_url || null;
+  const logoInput = document.getElementById('logo-file-input');
+
+  if (logoInput.files.length > 0) {
+    const fd = new FormData();
+    fd.append('file', logoInput.files[0]);
+    const resLogo = await fetch(API + `/orgs/${orgId}/upload-logo`, { method:'POST', headers:AH, body:fd });
+    if (resLogo.ok) { logoUrl = (await resLogo.json()).logo_url; }
+    else { alert((await resLogo.json()).detail || 'Ошибка загрузки лого'); return; }
+  }
+
+  const res = await fetch(API + `/orgs/${orgId}/update`, {
+    method:'PATCH', headers:H,
+    body: JSON.stringify({ name, description: document.getElementById('edit-desc').value.trim(),
+      industry: document.getElementById('edit-industry').value.trim(),
+      location: document.getElementById('edit-location').value.trim(),
+      website:  document.getElementById('edit-website').value.trim(),
+      logo_url: logoUrl })
+  });
+
+  if (res.ok) { closeModal('edit-modal'); await loadOrg(); }
+  else { alert((await res.json()).detail || 'Ошибка сохранения'); }
+}
+
+function openLeaveModal() {
+  const org = orgsData.find(o => String(o.id) === String(document.getElementById('current-org-id').value));
+  document.getElementById('leave-org-name').textContent = org?.name || '';
+  openModal('leave-modal');
+}
+async function confirmLeave() {
+  const orgId = document.getElementById('current-org-id').value;
+  const res = await fetch(API + `/orgs/${orgId}/leave`, { method:'POST', headers:H });
+  if (res.ok) { closeModal('leave-modal'); alert('Вы покинули организацию'); window.location.href='/dashboard'; }
+  else alert((await res.json()).detail || 'Ошибка');
+}
+
+function openModal(id)  { document.getElementById(id).classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function closeModal(id) { document.getElementById(id).classList.add('hidden');    document.body.style.overflow=''; }
+document.addEventListener('click', e => { if (e.target.classList.contains('modal-overlay')) { e.target.classList.add('hidden'); document.body.style.overflow=''; } });
+function escHtml(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function logout() { localStorage.clear(); window.location.href='/'; }
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
